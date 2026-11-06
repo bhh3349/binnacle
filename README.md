@@ -148,13 +148,12 @@ BINNACLE_WEB_OUT=/opt/binnacle/web pnpm build
 ## 五、运行
 
 ```bash
-./binnacle \
-  -addr 127.0.0.1:8090 \
-  -root / \
-  -state /var/lib/binnacle \
-  -web /opt/binnacle/web \
-  -sample 1000 \
-  -retain 7
+# 仅本机访问（默认，最安全）
+./binnacle -addr 127.0.0.1:8090 -root / -state /var/lib/binnacle -web /opt/binnacle/web
+
+# 局域网访问：绑定内网 IP，配合防火墙限源网段
+./binnacle -addr 192.168.1.66:8090 -root / -state /var/lib/binnacle -web /opt/binnacle/web
+ufw allow from 192.168.1.0/24 to any port 8090 proto tcp
 ```
 
 | 参数 | 默认 | 说明 |
