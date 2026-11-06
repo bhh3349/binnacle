@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   base: '/',
   build: {
-    outDir: '/opt/binnacle/web',
+    outDir: '/opt/binnacle/web', // 部署时改成你的静态目录；仓库内对应 /web/（已 gitignore）
     emptyOutDir: true,
     target: 'es2022',
     sourcemap: false,
