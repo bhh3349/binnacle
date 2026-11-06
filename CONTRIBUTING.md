@@ -7,7 +7,7 @@
 go version
 
 # 构建
-CGO_CFLAGS="-w" go build -o srvconsole ./cmd/srvconsole
+CGO_CFLAGS="-w" go build -o binnacle ./cmd/binnacle
 
 # 采集调试：打印一份完整快照
 CGO_CFLAGS="-w" go run ./cmd/probe
@@ -21,7 +21,7 @@ CGO_CFLAGS="-w" go run ./cmd/probe
 |---|---|
 | `collect/` | 采集层。`types.go` 里的 struct tag 就是 API 契约，改动需同步 `API.md` |
 | `api/` | HTTP/WS 层。`server.go` 是路由与鉴权，其余按领域拆分 |
-| `cmd/srvconsole/` | 主程序 |
+| `cmd/binnacle/` | 主程序 |
 | `cmd/probe/` | 采集调试工具 |
 
 ## 改动的硬性要求

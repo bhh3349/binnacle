@@ -18,7 +18,7 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"srvconsole/collect"
+	"github.com/bhh3349/binnacle/collect"
 )
 
 type Config struct {

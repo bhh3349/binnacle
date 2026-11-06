@@ -10,7 +10,7 @@ import (
 
 	_ "modernc.org/sqlite"
 
-	"srvconsole/collect"
+	"github.com/bhh3349/binnacle/collect"
 )
 
 // Store 只存降采样后的历史点，实时曲线走内存。
@@ -20,7 +20,7 @@ type Store struct {
 
 func OpenStore(path string) (*Store, error) {
 	if path == "" {
-		path = "/var/lib/srvconsole/metrics.db"
+		path = "/var/lib/binnacle/metrics.db"
 	}
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return nil, err

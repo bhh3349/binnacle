@@ -25,7 +25,7 @@ type Service struct {
 
 // 允许操作的 unit 白名单前缀，防止任意 unit 被停掉。
 var unitAllowPrefix = []string{
-	"dsh-", "srvconsole", "jupyter", "docker", "containerd", "sshd", "mihomo", "cockpit",
+	"dsh-", "binnacle", "jupyter", "docker", "containerd", "sshd", "mihomo", "cockpit",
 }
 
 func unitAllowed(name string) bool {
@@ -119,7 +119,7 @@ func (s *Server) svcAction(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 操作自身 unit 时必须脱离，否则 systemctl 会杀掉执行它的进程
-	if strings.HasPrefix(name, "srvconsole") && (action == "restart" || action == "stop") {
+	if strings.HasPrefix(name, "binnacle") && (action == "restart" || action == "stop") {
 		go func() {
 			time.Sleep(150 * time.Millisecond)
 			_ = exec.Command("systemctl", action, name).Run()

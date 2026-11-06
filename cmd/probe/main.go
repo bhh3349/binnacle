@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"srvconsole/collect"
+	"github.com/bhh3349/binnacle/collect"
 )
 
 func main() {

@@ -1,4 +1,4 @@
-# srvconsole API 契约
+# binnacle API 契约
 
 给前端工程师的对接文档。后端已全部实现并实测通过，本文档中的字段名与响应结构**与代码一致**。
 
@@ -362,7 +362,7 @@ curl -X POST --data-binary @chunk \
 { "ok": true, "pending": true, "output": "已派发，控制台会重启，请稍后刷新" }
 ```
 
-**只暴露白名单内的 unit**（`dsh-*`、`srvconsole*`、`jupyter*`、`docker`、`containerd`、`sshd`、`mihomo`、`cockpit*`），其余返回 `403`。
+**只暴露白名单内的 unit**（`dsh-*`、`binnacle*`、`jupyter*`、`docker`、`containerd`、`sshd`、`mihomo`、`cockpit*`），其余返回 `403`。
 
 ---
 

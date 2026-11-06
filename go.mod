@@ -1,4 +1,4 @@
-module srvconsole
+module github.com/bhh3349/binnacle
 
 go 1.26.0
 

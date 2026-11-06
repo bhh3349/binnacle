@@ -1,4 +1,4 @@
-# srvconsole
+# binnacle
 
 服务器状态监控 + 完整文件系统 + 服务管理 + Web 终端。单 Go 二进制，无外部依赖（除 NVML 动态库）。
 
@@ -79,7 +79,7 @@
 ## 三、目录结构
 
 ```
-srvconsole/
+binnacle/
 ├── API.md                  # 给前端的接口契约（重要，先读这个）
 ├── collect/
 │   ├── types.go            # 数据模型，JSON 字段即 API 契约
@@ -96,7 +96,7 @@ srvconsole/
 │   ├── term.go             # PTY 终端
 │   └── util.go
 └── cmd/
-    ├── srvconsole/main.go  # 主程序
+    ├── binnacle/main.go  # 主程序
     └── probe/main.go       # 采集调试工具（打印一份 JSON 快照）
 ```
 
@@ -106,10 +106,10 @@ srvconsole/
 
 ```bash
 # 依赖：Go 1.26+、gcc、libnvidia-ml（驱动自带）
-cd ~/srvconsole
+cd ~/binnacle
 
 # cgo 会因 NVML 头文件的 deprecated 标注刷大量警告，用 -w 压掉
-CGO_CFLAGS="-w" go build -o srvconsole ./cmd/srvconsole
+CGO_CFLAGS="-w" go build -o binnacle ./cmd/binnacle
 
 # 调试：打印一份采集快照
 CGO_CFLAGS="-w" go run ./cmd/probe
@@ -122,11 +122,11 @@ CGO_CFLAGS="-w" go run ./cmd/probe
 ## 五、运行
 
 ```bash
-./srvconsole \
+./binnacle \
   -addr 127.0.0.1:8090 \
   -root / \
-  -state /var/lib/srvconsole \
-  -web /opt/srvconsole/web \
+  -state /var/lib/binnacle \
+  -web /opt/binnacle/web \
   -sample 1000 \
   -retain 7
 ```
@@ -135,7 +135,7 @@ CGO_CFLAGS="-w" go run ./cmd/probe
 |---|---|---|
 | `-addr` | `127.0.0.1:8090` | 监听地址。**默认只绑本地**，生产走 SSH 隧道 |
 | `-root` | `/` | 文件管理根目录，可限定到某个子树 |
-| `-state` | `/var/lib/srvconsole` | token 与 SQLite 存放处 |
+| `-state` | `/var/lib/binnacle` | token 与 SQLite 存放处 |
 | `-web` | 自动探测 | 前端静态目录，找不到时只提供 API |
 | `-sample` | `1000` | 采样间隔（毫秒） |
 | `-retain` | `7` | 历史保留天数 |
@@ -147,15 +147,15 @@ CGO_CFLAGS="-w" go run ./cmd/probe
 
 ```ini
 [Unit]
-Description=srvconsole (server monitor + file manager)
+Description=binnacle (server monitor + file manager)
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/opt/srvconsole
-ExecStart=/opt/srvconsole/srvconsole -addr 127.0.0.1:8090 -root / -state /var/lib/srvconsole -web /opt/srvconsole/web
+WorkingDirectory=/opt/binnacle
+ExecStart=/opt/binnacle/binnacle -addr 127.0.0.1:8090 -root / -state /var/lib/binnacle -web /opt/binnacle/web
 Restart=always
 RestartSec=3
 
@@ -202,7 +202,7 @@ WantedBy=multi-user.target
 1. **默认绑 127.0.0.1**，不裸奔公网。推荐 `ssh -L 8090:127.0.0.1:8090 root@<host>`。
 2. **Token 鉴权**：`X-Token` 头 / `?token=` / HttpOnly Cookie 三选一，常量时间比较。
 3. **路径穿越防护**：`filepath.Clean` + 前缀校验，URL 编码先解码再判断，已测 `..`、`%2e%2e%2f`、绝对路径越界三种。
-4. **systemd unit 白名单**：只有 `dsh-*`、`srvconsole*`、`jupyter*`、`docker`、`containerd`、`sshd`、`mihomo`、`cockpit*` 可操作。
+4. **systemd unit 白名单**：只有 `dsh-*`、`binnacle*`、`jupyter*`、`docker`、`containerd`、`sshd`、`mihomo`、`cockpit*` 可操作。
 5. **`dsh-console` 的 8080 目前绑 0.0.0.0 裸奔**，这个洞与本次无关，但建议一并收掉。
 
 ---

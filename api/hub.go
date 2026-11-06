@@ -7,7 +7,7 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"srvconsole/collect"
+	"github.com/bhh3349/binnacle/collect"
 )
 
 // Hub 管理所有 WS 连接，单次采样广播给全部客户端。
