@@ -48,9 +48,9 @@ const BTN_VARIANTS: Record<BtnVariant, string> = {
 };
 
 const BTN_SIZES: Record<BtnSize, string> = {
-  xs: 'h-6 px-2 text-[11px] gap-1 rounded-[4px]',
-  sm: 'h-7 px-2.5 text-[12px] gap-1.5 rounded-[4px]',
-  md: 'h-9 px-4 text-[13px] gap-2 rounded-[4px]',
+  xs: 'h-6 px-2 text-[11.5px] gap-1 rounded-[4px]',
+  sm: 'h-7 px-2.5 text-[13px] gap-1.5 rounded-[4px]',
+  md: 'h-9 px-4 text-[13.5px] gap-2 rounded-[4px]',
 };
 
 export function Button({

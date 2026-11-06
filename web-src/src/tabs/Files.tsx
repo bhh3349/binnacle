@@ -25,6 +25,7 @@ import { Editor, Treemap, type EditorState } from './files/Editor';
 import { Preview, canPreview, previewKind } from './files/Preview';
 import { UploadPanel, useUploadQueue } from './files/Upload';
 import { DetailsPanel } from './files/Details';
+import { MultiTerminal } from '../components/MultiTerminal';
 import { useClipboard, useKeyboardNav, useSelection } from './files/useFileOps';
 import {
   ArrowUp,
@@ -342,6 +343,17 @@ export function FilesTab({ active = true }: { active?: boolean }) {
   const [focusIndex, setFocusIndex] = useState(0);
   const [chmodEntry, setChmodEntry] = useState<FsEntry | null>(null);
   const [detailEntry, setDetailEntry] = useState<FsEntry | null>(null);
+  // 左右分栏宽度（左栏百分比），持久化到 localStorage
+  const [leftPct, setLeftPct] = useState<number>(() => {
+    try {
+      const v = Number(localStorage.getItem('binnacle-split'));
+      return Number.isFinite(v) && v >= 25 && v <= 70 ? v : 45;
+    } catch {
+      return 45;
+    }
+  });
+  const [dragging, setDragging] = useState(false);
+  const splitRef = useRef<HTMLDivElement | null>(null);
   const [prompt, setPrompt] = useState<{
     kind: 'mkdir' | 'newfile' | 'rename';
     initial: string;
@@ -356,6 +368,40 @@ export function FilesTab({ active = true }: { active?: boolean }) {
     setToast({ kind, text });
     window.setTimeout(() => setToast(null), 3200);
   }, []);
+
+  /* ── 分隔条拖拽 ─────────────────────────────────────────────── */
+  useEffect(() => {
+    if (!dragging) return;
+    const onMove = (e: PointerEvent) => {
+      const box = splitRef.current?.getBoundingClientRect();
+      if (!box || box.width === 0) return;
+      const MIN_L = 320;
+      const MIN_R = 360;
+      const x = Math.min(Math.max(e.clientX - box.left, MIN_L), box.width - MIN_R);
+      const pct = (x / box.width) * 100;
+      setLeftPct(Math.min(70, Math.max(25, pct)));
+    };
+    const onUp = () => setDragging(false);
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp, { once: true });
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'col-resize';
+    return () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+    };
+  }, [dragging]);
+
+  // 宽度记忆
+  useEffect(() => {
+    try {
+      localStorage.setItem('binnacle-split', String(Math.round(leftPct)));
+    } catch {
+      /* 忽略 */
+    }
+  }, [leftPct]);
 
   /* ── 数据加载 ───────────────────────────────────────────────────── */
 
@@ -954,7 +1000,7 @@ export function FilesTab({ active = true }: { active?: boolean }) {
 
   return (
     <div
-      className="flex h-[calc(100vh-9.5rem)] min-h-[520px] flex-col gap-3"
+      className="flex h-[calc(100vh-9rem)] min-h-[520px] flex-col"
       onDragEnter={onDragEnter}
       onDragLeave={onDragLeave}
       onDragOver={onDragOver}
@@ -1028,7 +1074,7 @@ export function FilesTab({ active = true }: { active?: boolean }) {
                     });
                   }}
                   className={cx(
-                    'num px-1 py-0.5 text-[11.5px] transition-colors',
+                    'num px-1.5 py-0.5 text-[13px] transition-colors',
                     i === crumbs.length - 1
                       ? 'font-medium text-[var(--ink)]'
                       : 'text-[var(--text-secondary)] hover:bg-[var(--paper-3)] hover:text-[var(--ink)]',
@@ -1194,17 +1240,21 @@ export function FilesTab({ active = true }: { active?: boolean }) {
         </div>
       </Card>
 
-      {/* 主体 */}
-      <div className="flex min-h-0 flex-1 gap-3">
+      {/* 主体：左文件 / 右终端，可拖拽分隔 */}
+      <div ref={splitRef} className="flex min-h-0 flex-1 pt-3">
+        <div
+          className="flex min-h-0 min-w-0 flex-col"
+          style={{ width: `calc(${leftPct}% - 2px)` }}
+        >
         <Card padded={false} className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           {view === 'list' && (
-            <div className="flex shrink-0 items-center gap-2 rounded-t-[7px] border-b border-[var(--line)] bg-[var(--paper-3)] px-3 py-1.5 text-[10.5px] font-medium text-[var(--text-secondary)]">
+            <div className="flex shrink-0 items-center gap-2 rounded-t-[7px] border-b border-[var(--line)] bg-[var(--paper-3)] px-3 py-2 text-[12px] font-medium text-[var(--text-secondary)]">
               <span className="w-4" />
               <span className="w-3.5" />
               <span className="flex-1">名称</span>
-              <span className="w-[84px] text-right">大小</span>
-              <span className="w-[74px] text-right">权限</span>
-              <span className="w-[120px] text-right">修改时间</span>
+              <span className="w-[92px] text-right">大小</span>
+              <span className="w-[84px] text-right">权限</span>
+              <span className="w-[146px] text-right">修改时间</span>
             </div>
           )}
 
@@ -1336,7 +1386,7 @@ export function FilesTab({ active = true }: { active?: boolean }) {
                     <div
                       key={`${e.path}-${vi.index}`}
                       className={cx(
-                        'absolute top-0 left-0 flex w-full cursor-default items-center gap-2 px-3 text-[11.5px] transition-colors',
+                        'absolute top-0 left-0 flex w-full cursor-default items-center gap-2 px-3 text-[14px] transition-colors',
                         isSel
                           ? 'bg-[var(--accent)]/12'
                           : isFocus
@@ -1403,13 +1453,13 @@ export function FilesTab({ active = true }: { active?: boolean }) {
                           </span>
                         )}
                       </span>
-                      <span className="num w-[84px] shrink-0 text-right text-[10.5px] text-[var(--text-helper)]">
+                      <span className="num w-[92px] shrink-0 text-right text-[12.5px] text-[var(--text-secondary)]">
                         {e.isDir ? '—' : fmtBytes(e.size)}
                       </span>
-                      <span className="num w-[74px] shrink-0 text-right text-[10px] text-[var(--text-helper)]">
+                      <span className="num w-[84px] shrink-0 text-right text-[11.5px] text-[var(--text-helper)]">
                         {e.mode}
                       </span>
-                      <span className="num w-[120px] shrink-0 text-right text-[10px] text-[var(--text-helper)]">
+                      <span className="num w-[146px] shrink-0 text-right text-[12.5px] text-[var(--text-secondary)]">
                         {new Date(e.mtime).toLocaleString('zh-CN', { hour12: false })}
                       </span>
                     </div>
@@ -1426,14 +1476,14 @@ export function FilesTab({ active = true }: { active?: boolean }) {
                   <div className="mt-2 text-[13px] font-medium text-[var(--ink)]">
                     松开上传{dragCount > 0 ? ` ${dragCount} 个文件` : ''}
                   </div>
-                  <div className="num mt-1 text-[10.5px] text-[var(--text-helper)]">到 {cwd}</div>
+                  <div className="num mt-1 text-[12px] text-[var(--text-helper)]">到 {cwd}</div>
                 </div>
               </div>
             )}
           </div>
 
           {/* 底部状态 */}
-          <div className="flex shrink-0 items-center justify-between gap-3 border-t border-[var(--line)] px-3 py-1 text-[10.5px] text-[var(--text-helper)]">
+          <div className="flex shrink-0 items-center justify-between gap-3 border-t border-[var(--line)] px-3 py-1.5 text-[12px] text-[var(--text-helper)]">
             <span className="num truncate">
               {cwd}
               {searchRes && ` · 搜索「${search.trim()}」${searchRes.truncated ? '（截断）' : ''}`}
@@ -1448,9 +1498,33 @@ export function FilesTab({ active = true }: { active?: boolean }) {
           </div>
         </Card>
 
-        {/* 右侧面板 */}
-        {(editor || showDu || detailEntry) && (
-          <div className="flex w-[min(46%,620px)] min-w-[300px] flex-col gap-3">
+        </div>
+
+        {/* 分隔条 */}
+        <div
+          onPointerDown={(e) => {
+            e.preventDefault();
+            setDragging(true);
+          }}
+          onDoubleClick={() => setLeftPct(45)}
+          className={cx(
+            'group relative flex w-1 shrink-0 cursor-col-resize items-center justify-center transition-colors',
+            dragging ? 'bg-[var(--accent)]' : 'bg-transparent hover:bg-[var(--accent)]',
+          )}
+          title="拖拽调整宽度 · 双击恢复 45%"
+        >
+          <span
+            className={cx(
+              'h-8 w-[2px] rounded-full transition-colors',
+              dragging ? 'bg-white/70' : 'bg-[var(--line-strong)] group-hover:bg-white/70',
+            )}
+          />
+        </div>
+
+        {/* 右栏：终端 + 可选的编辑/详情面板 */}
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          {(editor || showDu || detailEntry) && (
+            <div className="mb-3 flex min-h-0 shrink-0 flex-col gap-3" style={{ maxHeight: '52%' }}>
             {showDu && (
               <Card className="flex max-h-[45%] flex-col overflow-hidden">
                 <SectionHead
@@ -1522,8 +1596,14 @@ export function FilesTab({ active = true }: { active?: boolean }) {
                 }}
               />
             )}
+            </div>
+          )}
+
+          {/* 终端区：占满右栏剩余高度 */}
+          <div className="card flex min-h-0 flex-1 flex-col overflow-hidden">
+            <MultiTerminal className="min-h-0 flex-1" emptyHint="点 + 新建终端" />
           </div>
-        )}
+        </div>
       </div>
 
       {/* 快捷入口 */}
@@ -1535,7 +1615,7 @@ export function FilesTab({ active = true }: { active?: boolean }) {
               key={s.path}
               onClick={() => void load(s.path)}
               className={cx(
-                'num border px-1.5 py-[1px] text-[10px] transition-colors',
+                'num border px-2 py-[2px] text-[11.5px] transition-colors',
                 cwd === s.path
                   ? 'border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]'
                   : 'border-[var(--line)] text-[var(--text-secondary)] hover:bg-[var(--paper-3)] hover:text-[var(--ink)]',
