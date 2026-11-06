@@ -125,6 +125,24 @@ CGO_CFLAGS="-w" go run ./cmd/probe
 
 产物：**19 MB 单二进制**。
 
+### 前端（web-src/）
+
+```bash
+cd web-src
+pnpm install
+pnpm build          # 默认输出到仓库根 web/
+```
+
+输出目录可用环境变量覆盖：
+
+```bash
+BINNACLE_WEB_OUT=/opt/binnacle/web pnpm build
+```
+
+技术栈：React 19 + Vite 6 + Tailwind 4 + TypeScript（strict）。
+图表用 uPlot（10 KB 级高频刷新），终端用 xterm.js，大目录虚拟滚动用 @tanstack/react-virtual。
+构建产物按 xterm / charts / vendor 拆包，首屏主包 gzip 约 104 KB。
+
 ---
 
 ## 五、运行
