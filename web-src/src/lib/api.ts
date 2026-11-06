@@ -112,6 +112,8 @@ function xhrUpload(
     const xhr = new XMLHttpRequest();
     xhr.open('POST', url, true);
     xhr.withCredentials = true;
+    const tok = getToken();
+    if (tok) xhr.setRequestHeader('X-Token', tok);
     for (const [k, v] of Object.entries(headers)) xhr.setRequestHeader(k, v);
 
     const started = performance.now();
@@ -287,17 +289,48 @@ export const api = {
     } = {},
   ) => uploadFile(path, file, opts),
 
-  /** 打包选中项为 zip。download=true 时返回可直接下载的 URL（POST 用表单触发）。 */
-  fsArchive: (paths: string[], dest?: string, download = false) =>
-    request<{ ok: boolean; path?: string; size?: number; count?: number }>('/api/fs/archive', {
+  /**
+   * 打包为 zip。
+   * · dest 有值 → 写盘，返回 { ok, path, size }
+   * · dest 为空 → 后端流式返回 zip，这里转成 Blob 触发浏览器下载
+   */
+  fsArchive: async (paths: string[], dest = ''): Promise<{ ok: boolean; path?: string; size?: number }> => {
+    const res = await fetch('/api/fs/archive', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ paths, dest: dest ?? '', download }),
-    }),
+      credentials: 'include',
+      headers: headers({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ paths, dest, download: dest === '' }),
+    });
+    if (!res.ok) {
+      let msg = `HTTP ${res.status}`;
+      try {
+        const j = (await res.json()) as { error?: string };
+        if (j.error) msg = j.error;
+      } catch {
+        /* 保持默认 */
+      }
+      throw new ApiError(res.status, msg);
+    }
+    const ct = res.headers.get('Content-Type') ?? '';
+    if (ct.includes('application/json')) {
+      return (await res.json()) as { ok: boolean; path?: string; size?: number };
+    }
+    // 流式 zip → 触发下载
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const cd = res.headers.get('Content-Disposition') ?? '';
+    const m = /filename="?([^";]+)"?/.exec(cd);
+    a.href = url;
+    a.download = m?.[1] ?? 'archive.zip';
+    a.click();
+    URL.revokeObjectURL(url);
+    return { ok: true, size: blob.size };
+  },
 
-  /** 解压 zip / tar.gz 到目标目录。 */
-  fsExtract: (path: string, destDir: string) =>
-    request<{ ok: boolean; count?: number; destDir?: string }>('/api/fs/extract', {
+  /** 解压 zip / tar / tar.gz / tgz。destDir 为空则后端自动解到同名目录。 */
+  fsExtract: (path: string, destDir = '') =>
+    request<{ ok: boolean; dest?: string; extracted?: number }>('/api/fs/extract', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ path, destDir }),

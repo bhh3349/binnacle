@@ -24,6 +24,7 @@ import { ContextMenu, Modal, Toast, type MenuItem, type MenuState } from '../com
 import { Editor, Treemap, type EditorState } from './files/Editor';
 import { Preview, canPreview, previewKind } from './files/Preview';
 import { UploadPanel, useUploadQueue } from './files/Upload';
+import { DetailsPanel } from './files/Details';
 import { useClipboard, useKeyboardNav, useSelection } from './files/useFileOps';
 import {
   ArrowUp,
@@ -326,7 +327,7 @@ export function FilesTab({ active = true }: { active?: boolean }) {
   const [preview, setPreview] = useState<FsEntry | null>(null);
   const [search, setSearch] = useState('');
   const [searchRes, setSearchRes] = useState<{ hits: FsEntry[]; truncated: boolean } | null>(null);
-  const [searching, setSearch] = useState(false);
+  const [searching, setSearching] = useState(false);
   const [searchErr, setSearchErr] = useState<string | null>(null);
   const [du, setDu] = useState<DuNode[] | null>(null);
   const [duLoading, setDuLoading] = useState(false);
@@ -340,6 +341,7 @@ export function FilesTab({ active = true }: { active?: boolean }) {
   const [menu, setMenu] = useState<MenuState | null>(null);
   const [focusIndex, setFocusIndex] = useState(0);
   const [chmodEntry, setChmodEntry] = useState<FsEntry | null>(null);
+  const [detailEntry, setDetailEntry] = useState<FsEntry | null>(null);
   const [prompt, setPrompt] = useState<{
     kind: 'mkdir' | 'newfile' | 'rename';
     initial: string;
@@ -414,7 +416,7 @@ export function FilesTab({ active = true }: { active?: boolean }) {
       return;
     }
     let cancelled = false;
-    setSearch(true);
+    setSearching(true);
     setSearchErr(null);
     const id = window.setTimeout(() => {
       api
@@ -426,7 +428,7 @@ export function FilesTab({ active = true }: { active?: boolean }) {
           if (!cancelled) setSearchErr(e instanceof Error ? e.message : '搜索失败');
         })
         .finally(() => {
-          if (!cancelled) setSearch(false);
+          if (!cancelled) setSearching(false);
         });
     }, 320);
     return () => {
@@ -560,17 +562,23 @@ export function FilesTab({ active = true }: { active?: boolean }) {
     void load(cwd, { keepSel: true });
   }, [clip, cwd, list, load, notify]);
 
+  /** 打包：dest 为空 → 浏览器直接下载；有 dest → 存到当前目录 */
   const doArchive = useCallback(
-    async (paths: string[]) => {
+    async (paths: string[], toDisk: boolean) => {
       if (paths.length === 0) return;
       try {
         const name =
           paths.length === 1 ? `${baseName(paths[0]!)}.zip` : `archive-${Date.now()}.zip`;
-        await api.fsArchive(paths, joinPath(cwd, name), false);
-        notify('ok', `已打包为 ${name}`);
-        void load(cwd, { keepSel: true });
+        if (toDisk) {
+          const r = await api.fsArchive(paths, joinPath(cwd, name));
+          notify('ok', `已打包为 ${r.path ?? name}`);
+          void load(cwd, { keepSel: true });
+        } else {
+          await api.fsArchive(paths);
+          notify('ok', '打包完成，浏览器开始下载');
+        }
       } catch (e) {
-        notify('err', e instanceof Error ? e.message : '打包失败（后端接口未就绪）');
+        notify('err', e instanceof Error ? e.message : '打包失败');
       }
     },
     [cwd, load, notify],
@@ -579,11 +587,11 @@ export function FilesTab({ active = true }: { active?: boolean }) {
   const doExtract = useCallback(
     async (entry: FsEntry) => {
       try {
-        await api.fsExtract(entry.path, cwd);
-        notify('ok', `已解压 ${entry.name}`);
+        const r = await api.fsExtract(entry.path, '');
+        notify('ok', `已解压 ${r.extracted ?? 0} 个条目 → ${r.dest ?? ''}`);
         void load(cwd, { keepSel: true });
       } catch (e) {
-        notify('err', e instanceof Error ? e.message : '解压失败（后端接口未就绪）');
+        notify('err', e instanceof Error ? e.message : '解压失败');
       }
     },
     [cwd, load, notify],
@@ -700,10 +708,16 @@ export function FilesTab({ active = true }: { active?: boolean }) {
             },
           },
           {
-            key: 'archive',
-            label: '打包为 zip',
+            key: 'archive-dl',
+            label: '打包下载 (zip)',
             icon: <FileArchive size={11} />,
-            onSelect: () => void doArchive(targets),
+            onSelect: () => void doArchive(targets, false),
+          },
+          {
+            key: 'archive-save',
+            label: '打包存到当前目录',
+            icon: <Package size={11} />,
+            onSelect: () => void doArchive(targets, true),
           },
           {
             key: 'chmod',
@@ -711,6 +725,13 @@ export function FilesTab({ active = true }: { active?: boolean }) {
             icon: <Lock size={11} />,
             disabled: !single,
             onSelect: () => single && setChmodEntry(single),
+          },
+          {
+            key: 'details',
+            label: '查看详情',
+            icon: <Info size={11} />,
+            disabled: !single,
+            onSelect: () => single && setDetailEntry(single),
           },
           {
             key: 'copypath',
@@ -1145,8 +1166,8 @@ export function FilesTab({ active = true }: { active?: boolean }) {
           <Button
             size="xs"
             disabled={sel.count === 0}
-            onClick={() => void doArchive(sel.paths)}
-            title="打包为 zip"
+            onClick={() => void doArchive(sel.paths, false)}
+            title="打包下载 zip"
           >
             <FileArchive size={11} />
           </Button>
@@ -1428,7 +1449,7 @@ export function FilesTab({ active = true }: { active?: boolean }) {
         </Card>
 
         {/* 右侧面板 */}
-        {(editor || showDu) && (
+        {(editor || showDu || detailEntry) && (
           <div className="flex w-[min(46%,620px)] min-w-[300px] flex-col gap-3">
             {showDu && (
               <Card className="flex max-h-[45%] flex-col overflow-hidden">
@@ -1464,6 +1485,12 @@ export function FilesTab({ active = true }: { active?: boolean }) {
                   )}
                 </div>
               </Card>
+            )}
+
+            {detailEntry && (
+              <div className="max-h-[55%] min-h-0">
+                <DetailsPanel entry={detailEntry} onClose={() => setDetailEntry(null)} />
+              </div>
             )}
 
             {editor && (
@@ -1530,7 +1557,7 @@ export function FilesTab({ active = true }: { active?: boolean }) {
       <ContextMenu state={menu} onClose={() => setMenu(null)} />
 
       <Preview
-        entry={preview ?? ({} as FsEntry)}
+        entry={preview}
         onClose={() => setPreview(null)}
         onPrev={() => {
           if (!preview) return;

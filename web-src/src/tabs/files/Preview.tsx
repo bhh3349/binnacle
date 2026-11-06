@@ -26,7 +26,20 @@ export function previewKind(name: string): PreviewKind {
   return null;
 }
 
-export function Preview({
+export function Preview(props: {
+  entry: FsEntry | null;
+  onClose: () => void;
+  onPrev: () => void;
+  onNext: () => void;
+  hasPrev: boolean;
+  hasNext: boolean;
+}) {
+  // 必须在外层判断：hooks 不能条件调用
+  if (!props.entry || !props.entry.path) return null;
+  return <PreviewInner {...props} entry={props.entry} />;
+}
+
+function PreviewInner({
   entry,
   onClose,
   onPrev,

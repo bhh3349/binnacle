@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { api } from '../lib/api';
-import type { FsEntry } from '../lib/types';
-import { baseName, joinPath, parentOf } from '../lib/format';
+import { api } from '../../lib/api';
+import type { FsEntry } from '../../lib/types';
+import { baseName, joinPath, parentOf } from '../../lib/format';
 
 /* ══════════════════════════════════════════════════════════════════════════
    多选：锚点 + 范围 + 切换

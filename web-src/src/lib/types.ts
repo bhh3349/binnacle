@@ -196,20 +196,20 @@ export interface FsStatResponse {
   name: string;
   isDir: boolean;
   size: number;
+  /** 符号形式，如 -rw-r--r-- */
   mode: string;
-  modeOctal?: string;
+  /** 八进制字符串，如 "0644" */
+  modeOct: string;
   mtime: string;
   atime?: string;
   ctime?: string;
-  uid?: number;
-  gid?: number;
-  owner?: string;
-  group?: string;
+  /** 用户名（后端已解析，不是数字） */
+  uid?: string;
+  gid?: string;
+  nlink?: number;
   inode?: number;
-  links?: number;
+  /** 仅文件有，目录没有 */
   md5?: string;
-  symlink?: boolean;
-  linkTo?: string;
 }
 
 export interface DuNode {
