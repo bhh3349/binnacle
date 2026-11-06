@@ -1,21 +1,20 @@
 /* ============================================================================
-   binnacle · 设计系统
-   移植自 guizang-page-skill 瑞士国际主义（Swiss / ikb）体系
+   binnacle · 设计系统 — 1Panel 企业级管理后台风格
    ─────────────────────────────────────────────────────────────────────────────
-   采纳的核心规则（来自 references/design-rules.md）：
-   · 12 列网格，gutter 20px，容器 1200px
-   · 字体三级：标题 / 正文 / 元信息（mono）
-   · 色彩：不用纯黑白；只有一个 accent；图表用 accent + 灰阶交替
-   · 分割线：section 之间不加线，靠间距呼吸；卡片靠背景色区分，不用边框
-   · 瑞士风：直角 0 圆角、无阴影、无渐变
-   · 中文排版 T2/T3/T6/T7/T8/T9/T11/T13/T14
+   规格（1Panel 官方值）：
+   · 主色 #005eeb，阶 light-1..6
+   · 侧栏白/极浅底，选中项浅蓝底 + 左侧 primary 竖条；暗色 #1d2129 / 卡片 #25272c
+   · 内容区 #f6f8fa 浅灰底，白色卡片圆角 8px + 细边框 + 极浅阴影
+   · 卡片头：primary 竖条(4×16px) + 标题，右上操作按钮
+   · 按钮 4px 圆角，输入框 4px；进度条圆头 3-6px
+   · 保留变量名结构（--paper/--ink/--accent 等），组件 var() 引用尽量少改
    ========================================================================= */
 
 @import 'tailwindcss';
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* ── 字体：拉丁子集本地内联，中文回退系统 Noto Sans CJK SC ─────────────── */
+/* ── 字体：拉丁子集本地内联 ─────────────────────────────────────────────── */
 
 @font-face {
   font-family: 'Inter';
@@ -40,7 +39,6 @@
 }
 
 @theme {
-  /* T13：西文在前、中文在后 */
   --font-sans:
     'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
     'Hiragino Sans GB', 'Noto Sans CJK SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
@@ -48,20 +46,7 @@
     'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Noto Sans CJK SC',
     monospace;
 
-  /* 间距刻度（design-rules --sp-*，只取 dashboard 需要的档） */
-  --spacing-1: 2px;
-  --spacing-2: 4px;
-  --spacing-3: 8px;
-  --spacing-4: 12px;
-  --spacing-5: 16px;
-  --spacing-6: 20px;
-  --spacing-7: 24px;
-  --spacing-8: 32px;
-  --spacing-9: 40px;
-  --spacing-10: 48px;
-  --spacing-11: 64px;
-
-  /* 语义色 → 全部指向 CSS 变量，亮暗同源 */
+  /* 语义色 → CSS 变量，亮暗同源 */
   --color-paper: var(--paper);
   --color-paper-2: var(--paper-2);
   --color-paper-3: var(--paper-3);
@@ -80,69 +65,89 @@
   --color-alert: var(--alert);
   --color-warn: var(--warn);
   --color-ok: var(--ok);
-
-  --radius-none: 0px;
 }
 
-/* ── 亮色：ikb 克莱因蓝 ───────────────────────────────────────────────── */
+/* ── 亮色：1Panel 官方值 ───────────────────────────────────────────────── */
 
 :root {
-  --paper: #fafaf8;
-  --paper-2: #f0f0ee;
-  --paper-3: #e6e6e3;
+  /* 内容区浅灰底 */
+  --paper: #f6f8fa;
+  /* 卡片白 */
+  --paper-2: #ffffff;
+  /* 嵌套灰块 / 表头 / 进度轨道 */
+  --paper-3: #f0f2f5;
 
-  --ink: #0a0a0a;
-  --text-primary: #0a0a0a;
-  --text-body: #252524;
-  --text-secondary: #525252;
-  --text-helper: #737373;
-  --text-placeholder: #a3a3a3;
+  --ink: #1f2329;
+  --text-primary: #1f2329;
+  --text-body: #33383d;
+  --text-secondary: #646a73;
+  --text-helper: #8f959e;
+  --text-placeholder: #bbbfc4;
 
-  --line-strong: #a3a3a3;
-  --line: #d4d4d2;
-  --line-subtle: #e4e4e1;
+  --line-strong: #c9cdd4;
+  --line: #e4e7ed;
+  --line-subtle: #eff1f4;
 
-  --accent: #002fa7;
-  --accent-ink: #002fa7;
+  /* panel-color-primary + 阶 */
+  --accent: #005eeb;
+  --accent-1: #196eed;
+  --accent-2: #337eef;
+  --accent-4: #669ef3;
+  --accent-6: #99bef7;
+  --accent-ink: #004ec4;
   --accent-on: #ffffff;
-  --accent-soft: #dfe5f2;
+  --accent-soft: #eaf1fd;
 
-  --alert: #b3261e;
-  --warn: #8a5a00;
-  --ok: #1a6b3c;
+  --alert: #f54a45;
+  --warn: #ff8800;
+  --ok: #00a854;
 
-  --shadow: none;
+  --shadow-card: 0 1px 4px rgba(0, 21, 41, 0.08);
+  --shadow-pop: 0 4px 16px rgba(0, 21, 41, 0.14);
+
+  /* 圆角 */
+  --radius-card: 8px;
+  --radius-btn: 4px;
+  --radius-input: 4px;
+
   color-scheme: light;
 }
 
-/* ── 暗色：午夜墨对应 ─────────────────────────────────────────────────── */
+/* ── 暗色：element-dark 观感 ──────────────────────────────────────────── */
 
 .dark {
-  --paper: #0e0e0d;
-  --paper-2: #191917;
-  --paper-3: #232320;
+  --paper: #101014;
+  /* 内容区与卡片同底，卡片靠边框区分 */
+  --paper-2: #1d2129;
+  --paper-3: #25272c;
 
-  --ink: #f0f0ec;
-  --text-primary: #f0f0ec;
-  --text-body: #d8d8d3;
-  --text-secondary: #a8a8a3;
-  --text-helper: #86867f;
-  --text-placeholder: #66665f;
+  --ink: #e8eaed;
+  --text-primary: #e8eaed;
+  --text-body: #cfd3d8;
+  --text-secondary: #a1a6af;
+  --text-helper: #7d828a;
+  --text-placeholder: #5a5f66;
 
-  --line-strong: #55554f;
-  --line: #2e2e2a;
-  --line-subtle: #242420;
+  --line-strong: #494e56;
+  --line: #333538;
+  --line-subtle: #2a2c31;
 
-  --accent: #96b0ff;
-  --accent-ink: #b8c8ff;
-  --accent-on: #0a0a0a;
-  --accent-soft: #1c2440;
+  --accent: #337eef;
+  --accent-1: #4b90f1;
+  --accent-2: #669ef3;
+  --accent-4: #99bef7;
+  --accent-6: #ccdff9;
+  --accent-ink: #669ef3;
+  --accent-on: #ffffff;
+  --accent-soft: #1c2b45;
 
-  --alert: #ff6b60;
-  --warn: #e0ab56;
-  --ok: #5ec98a;
+  --alert: #f56c6c;
+  --warn: #e6a23c;
+  --ok: #67c23a;
 
-  --shadow: none;
+  --shadow-card: none;
+  --shadow-pop: 0 4px 16px rgba(0, 0, 0, 0.5);
+
   color-scheme: dark;
 }
 
@@ -163,52 +168,42 @@ body {
   background: var(--paper);
   color: var(--text-body);
   font-family: var(--font-sans);
-  font-size: 17px; /* T2 */
-  line-height: 1.8; /* T3 瑞士风 */
+  font-size: 14px;
+  line-height: 1.6;
   font-weight: 400;
-  letter-spacing: 0; /* T7 汉字密排 */
-  line-break: strict; /* T8 避头尾 */
-  word-break: normal;
-  overflow-wrap: break-word; /* T11 */
-  text-spacing-trim: normal; /* T9 标点挤压 */
-  hanging-punctuation: allow-end;
-  font-kerning: normal;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  font-variant-numeric: tabular-nums;
 }
 
 ::selection {
-  background: var(--accent);
-  color: var(--accent-on);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
 }
 
-/* T14：中文标题字重不低于 300，行高 1.4，不加负字距 */
 h1,
 h2,
 h3,
 h4 {
-  letter-spacing: 0;
-  line-height: 1.4;
   font-weight: 500;
   color: var(--text-primary);
-  line-break: strict;
 }
 
-/* 细滚动条 */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--line) transparent;
+  scrollbar-color: var(--line-strong) transparent;
 }
 *::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 *::-webkit-scrollbar-thumb {
-  background: var(--line);
+  background: var(--line-strong);
+  border-radius: 4px;
 }
 *::-webkit-scrollbar-thumb:hover {
-  background: var(--line-strong);
+  background: var(--text-placeholder);
 }
 *::-webkit-scrollbar-track {
   background: transparent;
@@ -216,7 +211,6 @@ h4 {
 
 /* ── 工具类 ───────────────────────────────────────────────────────────── */
 
-/* 元信息 / 数字：等宽字体 + 表格数字对齐 */
 @utility num {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
@@ -224,30 +218,23 @@ h4 {
   letter-spacing: -0.01em;
 }
 
-/* 元信息标签：瑞士风等宽大写小字 */
+/* 元信息标签 */
 @utility kicker {
   font-family: var(--font-mono);
   font-size: 10.5px;
   font-weight: 500;
   line-height: 1.4;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--text-helper);
 }
 
-/* 卡片：背景色区分，无边框无阴影无圆角（瑞士风） */
+/* 卡片：白底圆角细边框浅阴影 */
 @utility card {
   background: var(--paper-2);
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-}
-
-/* 强调块：accent 满底色块 */
-@utility card-accent {
-  background: var(--accent);
-  color: var(--accent-on);
-  border-radius: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
 }
 
 /* ── 动效 ─────────────────────────────────────────────────────────────── */
@@ -266,8 +253,8 @@ h4 {
 
 .skeleton {
   background: var(--paper-3);
-  border-radius: 0;
-  animation: sc-shimmer 1.6s var(--ease-standard, ease-in-out) infinite;
+  border-radius: 4px;
+  animation: sc-shimmer 1.6s ease-in-out infinite;
 }
 
 @keyframes sc-fade-in {
@@ -280,7 +267,7 @@ h4 {
 }
 
 .fade-in {
-  animation: sc-fade-in 240ms cubic-bezier(0.2, 0, 0.38, 0.9);
+  animation: sc-fade-in 200ms ease-out;
 }
 
 @keyframes sc-spin {
@@ -317,17 +304,15 @@ h4 {
 .u-legend {
   font-size: 11px !important;
   font-family: var(--font-mono) !important;
-  color: var(--text-helper) !important;
-  letter-spacing: 0.04em;
+  color: var(--text-secondary) !important;
 }
 .u-legend .u-marker {
-  border-width: 0 !important;
-  border-radius: 0 !important;
+  border-radius: 2px !important;
   width: 8px !important;
   height: 8px !important;
 }
 .u-axis {
-  color: var(--text-placeholder) !important;
+  color: var(--text-helper) !important;
 }
 .u-select {
   background: color-mix(in oklab, var(--accent) 12%, transparent) !important;

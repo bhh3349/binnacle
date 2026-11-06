@@ -1198,7 +1198,7 @@ export function FilesTab({ active = true }: { active?: boolean }) {
       <div className="flex min-h-0 flex-1 gap-3">
         <Card padded={false} className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           {view === 'list' && (
-            <div className="flex shrink-0 items-center gap-2 border-b border-[var(--line)] px-3 py-1.5 text-[10.5px] text-[var(--text-helper)]">
+            <div className="flex shrink-0 items-center gap-2 rounded-t-[7px] border-b border-[var(--line)] bg-[var(--paper-3)] px-3 py-1.5 text-[10.5px] font-medium text-[var(--text-secondary)]">
               <span className="w-4" />
               <span className="w-3.5" />
               <span className="flex-1">名称</span>

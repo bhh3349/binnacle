@@ -9,12 +9,12 @@ import {
   Collapsible,
   EmptyState,
   ErrorState,
+  Gauge,
   Grid12,
   KV,
   Meter,
   SectionHead,
   Skeleton,
-  Stat,
 } from '../components/ui';
 import {
   cx,
@@ -416,56 +416,49 @@ export function OverviewTab({ active = true }: { active?: boolean }) {
         />
       )}
 
-      {/* ── 四个主指标：各占 3 列，等高 ─────────────────────────────── */}
-      <Grid12>
-        <Card className="lg:col-span-3">
-          <Stat
-            label="CPU 利用率"
-            value={fmtNum(host.cpu.usage, 1)}
-            unit="%"
-            sub={`${fmtNum(host.cpu.mhz, 0)} MHz · ${host.cpu.threads} 线程`}
-            tone={host.cpu.usage > 90 ? 'danger' : host.cpu.usage > 70 ? 'warn' : undefined}
+      {/* ── 圆环仪表：CPU / 内存 / 负载 / 根磁盘（1Panel 标志布局）───── */}
+      <Card>
+        <div className="grid grid-cols-2 gap-4 py-2 sm:grid-cols-4">
+          <Gauge
+            percent={host.cpu.usage}
+            label="CPU"
+            sub={`${host.cpu.cores} 核 ${host.cpu.threads} 线程 · ${fmtNum(host.cpu.mhz, 0)} MHz`}
           />
-          <Meter percent={host.cpu.usage} height={2} className="mt-auto pt-0" />
-        </Card>
-        <Card className="lg:col-span-3">
-          <Stat
-            label="内存"
-            value={fmtBytes(mem.used)}
-            sub={`共 ${fmtBytes(mem.total)} · ${fmtPct(mem.percent, 1)}`}
-            tone={mem.percent > 90 ? 'danger' : mem.percent > 75 ? 'warn' : undefined}
-          />
-          <Meter
+          <Gauge
             percent={mem.percent}
-            height={2}
-            tone={mem.percent > 90 ? 'danger' : 'accent'}
-            className="mt-auto pt-0"
+            label="内存"
+            sub={`${fmtBytes(mem.used)} / ${fmtBytes(mem.total)}`}
           />
-        </Card>
-        <Card className="lg:col-span-3">
-          <Stat
-            label="系统负载"
-            value={load1.toFixed(2)}
+          <Gauge
+            percent={Math.min(100, (load1 / Math.max(host.cpu.threads, 1)) * 100)}
+            label="负载"
+            formatValue={() => load1.toFixed(2)}
             sub={`5 分 ${load5.toFixed(2)} · 15 分 ${load15.toFixed(2)}`}
-            tone={load1 > host.cpu.threads ? 'warn' : undefined}
           />
-          <div className="num mt-auto truncate pt-1 text-[10.5px] text-[var(--text-placeholder)]">
-            {host.hostname} · 运行 {fmtUptime(host.uptimeSec)}
-          </div>
-        </Card>
-        <Card className="lg:col-span-3">
-          <Stat
-            label="网络吞吐"
-            value={fmtBytes(rxTotal + txTotal)}
-            unit="/s"
-            sub={host.net.length === 0 ? '无活动网卡' : host.net.map((n) => n.iface).join(' · ')}
+          <Gauge
+            percent={host.disks.find((d) => d.mount === '/')?.percent ?? 0}
+            label="磁盘 /"
+            sub={
+              host.disks[0]
+                ? `${fmtBytes(host.disks[0].used)} / ${fmtBytes(host.disks[0].total)}`
+                : undefined
+            }
           />
-          <div className="num mt-auto flex items-center gap-3 pt-1 text-[10.5px]">
-            <span className="text-[var(--text-secondary)]">↓ {fmtBytes(rxTotal)}/s</span>
-            <span className="text-[var(--text-placeholder)]">↑ {fmtBytes(txTotal)}/s</span>
+        </div>
+        <div className="mt-2 flex items-center justify-between gap-3 border-t border-[var(--line-subtle)] pt-3">
+          <div className="num flex items-center gap-4 text-[11px] text-[var(--text-helper)]">
+            <span className="truncate">
+              {host.hostname} · 运行 {fmtUptime(host.uptimeSec)}
+            </span>
+            <span className="shrink-0">
+              网络 ↓ {fmtBytes(rxTotal)}/s ↑ {fmtBytes(txTotal)}/s
+            </span>
           </div>
-        </Card>
-      </Grid12>
+          <div className="num shrink-0 text-[11px] text-[var(--text-placeholder)]">
+            Swap {fmtBytes(swap.used)} / {fmtBytes(swap.total)}
+          </div>
+        </div>
+      </Card>
 
       {/* ── CPU 热力图：整幅 ──────────────────────────────────────── */}
       <Card>
@@ -529,8 +522,8 @@ export function OverviewTab({ active = true }: { active?: boolean }) {
         </Card>
       </Grid12>
 
-      {/* ── 磁盘 7 列 / 温度+风扇 5 列 ───────────────────────────── */}
-      <Grid12>
+      {/* ── 磁盘 7 列 / 温度+风扇 5 列（各自内容高度）──────────────── */}
+      <Grid12 className="items-start">
         <Card className="lg:col-span-7">
           <SectionHead
             title="磁盘"
