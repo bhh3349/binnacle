@@ -1,0 +1,201 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Noto Sans CJK SC', 'Noto Sans SC',
+    'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-mono:
+    ui-monospace, 'SFMono-Regular', 'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+
+  --color-bg: var(--sc-bg);
+  --color-surface: var(--sc-surface);
+  --color-surface-2: var(--sc-surface-2);
+  --color-line: var(--sc-line);
+  --color-line-strong: var(--sc-line-strong);
+  --color-fg: var(--sc-fg);
+  --color-fg-muted: var(--sc-fg-muted);
+  --color-fg-subtle: var(--sc-fg-subtle);
+  --color-accent: var(--sc-accent);
+  --color-accent-fg: var(--sc-accent-fg);
+  --color-ok: var(--sc-ok);
+  --color-warn: var(--sc-warn);
+  --color-danger: var(--sc-danger);
+}
+
+:root {
+  --sc-bg: #ffffff;
+  --sc-surface: #fcfcfd;
+  --sc-surface-2: #f5f6f8;
+  --sc-line: #e7e8ec;
+  --sc-line-strong: #d6d8de;
+  --sc-fg: #16181d;
+  --sc-fg-muted: #62666f;
+  --sc-fg-subtle: #8e939d;
+  --sc-accent: #4f46e5;
+  --sc-accent-fg: #ffffff;
+  --sc-ok: #15803d;
+  --sc-warn: #a16207;
+  --sc-danger: #dc2626;
+  --sc-shadow: 0 1px 2px rgb(16 18 23 / 0.06), 0 1px 3px rgb(16 18 23 / 0.04);
+  color-scheme: light;
+}
+
+.dark {
+  --sc-bg: #08090b;
+  --sc-surface: #0d0e11;
+  --sc-surface-2: #14161a;
+  --sc-line: #1e2025;
+  --sc-line-strong: #2a2d34;
+  --sc-fg: #eceef2;
+  --sc-fg-muted: #9aa0aa;
+  --sc-fg-subtle: #6b7280;
+  --sc-accent: #818cf8;
+  --sc-accent-fg: #0b0c0f;
+  --sc-ok: #4ade80;
+  --sc-warn: #fbbf24;
+  --sc-danger: #f87171;
+  --sc-shadow: none;
+  color-scheme: dark;
+}
+
+* {
+  border-color: var(--sc-line);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--sc-bg);
+  color: var(--sc-fg);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-variant-numeric: tabular-nums;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--sc-accent) 30%, transparent);
+}
+
+/* 细滚动条 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--sc-line-strong) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--sc-line-strong);
+  border-radius: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@utility card {
+  background: var(--sc-surface);
+  border: 1px solid var(--sc-line);
+  border-radius: 10px;
+}
+
+@utility num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* 骨架屏 */
+@keyframes sc-shimmer {
+  0% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0.45;
+  }
+}
+
+.skeleton {
+  background: var(--sc-surface-2);
+  border-radius: 6px;
+  animation: sc-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes sc-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.fade-in {
+  animation: sc-fade-in 220ms ease-out;
+}
+
+@keyframes sc-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spin {
+  animation: sc-spin 900ms linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .skeleton {
+    animation: none;
+    opacity: 0.7;
+  }
+}
+
+/* uPlot 主题化 */
+.uplot,
+.u-wrap {
+  font-family: var(--font-mono) !important;
+}
+.u-legend {
+  font-size: 11px !important;
+  color: var(--sc-fg-muted) !important;
+}
+.u-legend .u-marker {
+  border-width: 0 !important;
+  border-radius: 2px;
+}
+.u-axis {
+  color: var(--sc-fg-subtle) !important;
+}
+.u-select {
+  background: color-mix(in oklab, var(--sc-accent) 14%, transparent) !important;
+}
+
+/* xterm 容器 */
+.term-host .xterm {
+  padding: 10px 12px;
+}
+.term-host .xterm-viewport {
+  background: transparent !important;
+}

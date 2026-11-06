@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="zh-CN" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="description" content="binnacle · 一台机器的驾驶舱 — 服务器实时监控、文件管理、服务与终端" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>binnacle · 一台机器的驾驶舱</title>
+    <script>
+      // 主题在首帧前定好，避免闪白
+      try {
+        var t = localStorage.getItem('sc-theme');
+        if (t === 'light') document.documentElement.classList.remove('dark');
+        else if (t === 'dark') document.documentElement.classList.add('dark');
+        else if (window.matchMedia('(prefers-color-scheme: light)').matches)
+          document.documentElement.classList.remove('dark');
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
