@@ -1,4 +1,4 @@
-/** 与 /root/WorkSpace/binnacle/collect/types.go 一一对应。 */
+/** 与后端 collect/types.go 一一对应（字段名与 JSON tag 必须保持一致）。 */
 
 export interface MemStats {
   total: number;
