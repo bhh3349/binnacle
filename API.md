@@ -52,7 +52,7 @@
 
 ```jsonc
 {
-  "hostname": "bhhserver",
+  "hostname": "example-host",
   "uptimeSec": 37867,
   "load": [0.24, 0.23, 0.19],          // 1/5/15 分钟
   "cpu": {
@@ -222,7 +222,7 @@ display_clock_setting
   "entries": [
     {
       "name": "WorkSpace",
-      "path": "/root/WorkSpace",
+      "path": "/srv",
       "isDir": true,
       "size": 4096,
       "mode": "drwxr-xr-x",
@@ -240,7 +240,7 @@ display_clock_setting
 ### `GET /api/fs/read?path=...`
 
 ```jsonc
-{ "path": "/etc/hostname", "size": 10, "mtime": "...", "content": "bhhserver\n" }
+{ "path": "/etc/hostname", "size": 10, "mtime": "...", "content": "example-host\n" }
 ```
 
 超过 4 MB 返回 `413`，前端应引导用户下载。
@@ -313,7 +313,7 @@ curl -X POST --data-binary @chunk \
 {
   "path": "/root",
   "depth": 1,
-  "nodes": [ { "name": "WorkSpace", "path": "/root/WorkSpace", "size": 1234567, "isDir": true, "count": 42 } ]
+  "nodes": [ { "name": "WorkSpace", "path": "/srv", "size": 1234567, "isDir": true, "count": 42 } ]
 }
 ```
 
@@ -379,7 +379,7 @@ curl -X POST --data-binary @chunk \
 连接后先补 200 行历史，之后实时跟随。每帧：
 
 ```jsonc
-{ "line": "2026-11-06T16:25:54+08:00 bhhserver systemd[1]: Started dsh-console.service - ..." }
+{ "line": "2026-11-06T16:25:54+08:00 example-host systemd[1]: Started dsh-console.service - ..." }
 ```
 
 行格式是 `journalctl -o short-iso`，前端可正则拆出时间戳与消息体做级别着色。

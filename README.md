@@ -106,7 +106,7 @@ srvconsole/
 
 ```bash
 # 依赖：Go 1.26+、gcc、libnvidia-ml（驱动自带）
-cd /root/WorkSpace/srvconsole
+cd ~/srvconsole
 
 # cgo 会因 NVML 头文件的 deprecated 标注刷大量警告，用 -w 压掉
 CGO_CFLAGS="-w" go build -o srvconsole ./cmd/srvconsole
@@ -173,7 +173,7 @@ WantedBy=multi-user.target
 
 ## 六、已实测通过的接口
 
-启动在 127.0.0.1:8091（root 限定 `/root/WorkSpace`）跑过一轮完整验证：
+启动在 127.0.0.1:8091（root 限定 `/srv`）跑过一轮完整验证：
 
 | 项 | 结果 |
 |---|---|
