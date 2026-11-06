@@ -3,11 +3,11 @@
 服务器状态监控 + 完整文件系统 + 服务管理 + Web 终端。单 Go 二进制，无外部依赖（除 NVML 动态库）。
 
 <p align="center">
-  <img src="docs/screenshots/overview-top.png" width="820" alt="binnacle 概览" />
+  <img src="docs/design-review/after-overview-light.png" width="820" alt="binnacle 概览" />
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/overview-gpu.png" width="820" alt="GPU 按能力渲染 —— 3060 有风扇无 ECC，V100 有 ECC 无风扇" />
+  <img src="docs/design-review/after-overview-dark.png" width="820" alt="GPU 按能力渲染 —— 3060 有风扇无 ECC，V100 有 ECC 无风扇" />
 </p>
 
 **这不是 DSH 的组件**，是独立的运维面板，端口独立（默认 8090）。
