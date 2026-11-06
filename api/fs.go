@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -466,4 +467,39 @@ func (s *Server) fsRoots(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	writeJSON(w, 200, map[string]any{"root": s.cfg.RootPath, "shortcuts": roots})
+}
+
+// fsStat 单文件完整属性（供前端详情面板使用）。
+func (s *Server) fsStat(w http.ResponseWriter, r *http.Request) {
+	full, err := s.resolve(r.URL.Query().Get("path"))
+	if err != nil {
+		writeJSON(w, 400, map[string]any{"error": err.Error()})
+		return
+	}
+	fi, err := os.Stat(full)
+	if err != nil {
+		writeJSON(w, 404, map[string]any{"error": err.Error()})
+		return
+	}
+	lfi, _ := fi.Sys().(*syscall.Stat_t)
+	resp := map[string]any{
+		"path":    s.virtual(full),
+		"name":    filepath.Base(full),
+		"isDir":   fi.IsDir(),
+		"size":    fi.Size(),
+		"mode":    fi.Mode().String(),
+		"modeOct": fmt.Sprintf("%04o", uint32(fi.Mode().Perm())),
+		"mtime":   fi.ModTime(),
+		"atime":   fileAtime(fi),
+		"ctime":   fileCtime(lfi),
+		"uid":     uidOf(fi),
+		"nlink":   fileNlink(lfi),
+		"inode":   fileInode(lfi),
+	}
+	if !fi.IsDir() {
+		if md5hex, err := fileMD5(full); err == nil {
+			resp["md5"] = md5hex
+		}
+	}
+	writeJSON(w, 200, resp)
 }

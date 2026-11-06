@@ -4,6 +4,7 @@ import type {
   FsReadResponse,
   FsRoots,
   FsSearchResponse,
+  FsStatResponse,
   HistoryResponse,
   LogsResponse,
   Meta,
@@ -89,6 +90,117 @@ function q(params: Record<string, string | number | undefined>): string {
   return s ? `?${s}` : '';
 }
 
+export interface UploadProgress {
+  loaded: number;
+  total: number;
+  /** 0..100 */
+  percent: number;
+  /** 字节/秒 */
+  speed: number;
+}
+
+/** 分块阈值：小于此值走单请求 */
+const UPLOAD_CHUNK = 8 * 1024 * 1024;
+
+function xhrUpload(
+  url: string,
+  body: Blob | File,
+  headers: Record<string, string>,
+  opts: { onProgress?: (p: UploadProgress) => void; signal?: AbortSignal; baseLoaded?: number; total?: number },
+): Promise<{ ok: boolean; path: string; size: number }> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', url, true);
+    xhr.withCredentials = true;
+    for (const [k, v] of Object.entries(headers)) xhr.setRequestHeader(k, v);
+
+    const started = performance.now();
+    const base = opts.baseLoaded ?? 0;
+    const total = opts.total ?? body.size;
+
+    xhr.upload.onprogress = (ev) => {
+      if (!ev.lengthComputable) return;
+      const loaded = base + ev.loaded;
+      const secs = Math.max((performance.now() - started) / 1000, 0.001);
+      opts.onProgress?.({
+        loaded,
+        total,
+        percent: total > 0 ? Math.min(100, Math.round((loaded / total) * 100)) : 0,
+        speed: ev.loaded / secs,
+      });
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          resolve(JSON.parse(xhr.responseText) as { ok: boolean; path: string; size: number });
+        } catch {
+          resolve({ ok: true, path: '', size: total });
+        }
+      } else {
+        let msg = `HTTP ${xhr.status}`;
+        try {
+          const j = JSON.parse(xhr.responseText) as { error?: string };
+          if (j.error) msg = j.error;
+        } catch {
+          /* 保持默认 */
+        }
+        reject(new ApiError(xhr.status, msg));
+      }
+    };
+    xhr.onerror = () => reject(new ApiError(0, '网络错误'));
+    xhr.onabort = () => reject(new DOMException('上传已取消', 'AbortError'));
+
+    if (opts.signal) {
+      if (opts.signal.aborted) {
+        xhr.abort();
+        return;
+      }
+      opts.signal.addEventListener('abort', () => xhr.abort(), { once: true });
+    }
+    xhr.send(body);
+  });
+}
+
+async function uploadFile(
+  path: string,
+  file: File,
+  opts: { onProgress?: (p: UploadProgress) => void; signal?: AbortSignal; chunkSize?: number },
+): Promise<{ ok: boolean; path: string; size: number }> {
+  const chunkSize = opts.chunkSize ?? UPLOAD_CHUNK;
+  const url = `/api/fs/upload${q({ path })}`;
+
+  if (file.size <= chunkSize) {
+    return xhrUpload(url, file, { 'Content-Type': 'application/octet-stream' }, opts);
+  }
+
+  let offset = 0;
+  let last: { ok: boolean; path: string; size: number } = { ok: true, path, size: 0 };
+  while (offset < file.size) {
+    if (opts.signal?.aborted) throw new DOMException('上传已取消', 'AbortError');
+    const end = Math.min(offset + chunkSize, file.size);
+    const blob = file.slice(offset, end);
+    const final = end >= file.size ? 1 : 0;
+    last = await xhrUpload(
+      url,
+      blob,
+      {
+        'Content-Type': 'application/octet-stream',
+        'Content-Range': `bytes ${offset}-${end - 1}/${file.size}`,
+        'X-Upload-Final': String(final),
+      },
+      { ...opts, baseLoaded: offset, total: file.size },
+    );
+    offset = end;
+    opts.onProgress?.({
+      loaded: offset,
+      total: file.size,
+      percent: Math.min(100, Math.round((offset / file.size) * 100)),
+      speed: 0,
+    });
+  }
+  return last;
+}
+
 export const api = {
   login: (token: string) =>
     request<{ ok: boolean }>('/api/login', {
@@ -161,41 +273,38 @@ export const api = {
 
   fsDu: (path: string, depth = 1) => request<DuResponse>(`/api/fs/du${q({ path, depth })}`),
 
-  fsUpload: async (path: string, file: File, onProgress?: (pct: number) => void) => {
-    // 小文件一次 PUT 语义：整文件上传。大文件（>16MB）分块续传。
-    const CHUNK = 8 * 1024 * 1024;
-    if (file.size <= CHUNK) {
-      const res = await fetch(`/api/fs/upload${q({ path })}`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: headers({ 'Content-Type': 'application/octet-stream' }),
-        body: file,
-      });
-      if (!res.ok) throw new ApiError(res.status, await res.text());
-      onProgress?.(100);
-      return (await res.json()) as { ok: boolean; path: string; size: number };
-    }
-    let offset = 0;
-    while (offset < file.size) {
-      const end = Math.min(offset + CHUNK, file.size);
-      const blob = file.slice(offset, end);
-      const final = end >= file.size ? 1 : 0;
-      const res = await fetch(`/api/fs/upload${q({ path })}`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: headers({
-          'Content-Type': 'application/octet-stream',
-          'Content-Range': `bytes ${offset}-${end - 1}/${file.size}`,
-          'X-Upload-Final': String(final),
-        }),
-        body: blob,
-      });
-      if (!res.ok) throw new ApiError(res.status, await res.text());
-      offset = end;
-      onProgress?.(Math.round((offset / file.size) * 100));
-    }
-    return { ok: true, path, size: file.size };
-  },
+  /**
+   * 上传文件。小文件一次 POST，大文件按 CHUNK 分块续传。
+   * 通过 XHR 上报真实进度（fetch 拿不到上传进度），支持 AbortSignal 取消。
+   */
+  fsUpload: (
+    path: string,
+    file: File,
+    opts: {
+      onProgress?: (p: UploadProgress) => void;
+      signal?: AbortSignal;
+      chunkSize?: number;
+    } = {},
+  ) => uploadFile(path, file, opts),
+
+  /** 打包选中项为 zip。download=true 时返回可直接下载的 URL（POST 用表单触发）。 */
+  fsArchive: (paths: string[], dest?: string, download = false) =>
+    request<{ ok: boolean; path?: string; size?: number; count?: number }>('/api/fs/archive', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ paths, dest: dest ?? '', download }),
+    }),
+
+  /** 解压 zip / tar.gz 到目标目录。 */
+  fsExtract: (path: string, destDir: string) =>
+    request<{ ok: boolean; count?: number; destDir?: string }>('/api/fs/extract', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path, destDir }),
+    }),
+
+  /** 单文件完整属性。 */
+  fsStat: (path: string) => request<FsStatResponse>(`/api/fs/stat${q({ path })}`),
 
   downloadUrl: (path: string) => {
     const tok = getToken();

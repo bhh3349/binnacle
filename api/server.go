@@ -149,6 +149,9 @@ func (s *Server) Handler() http.Handler {
 	mux.Handle("GET /api/fs/search", auth(http.HandlerFunc(s.fsSearch)))
 	mux.Handle("GET /api/fs/du", auth(http.HandlerFunc(s.fsDU)))
 	mux.Handle("GET /api/fs/roots", auth(http.HandlerFunc(s.fsRoots)))
+	mux.Handle("POST /api/fs/archive", auth(http.HandlerFunc(s.fsArchive)))
+	mux.Handle("POST /api/fs/extract", auth(http.HandlerFunc(s.fsExtract)))
+	mux.Handle("GET /api/fs/stat", auth(http.HandlerFunc(s.fsStat)))
 
 	// 服务与日志
 	mux.Handle("GET /api/services", auth(http.HandlerFunc(s.svcList)))

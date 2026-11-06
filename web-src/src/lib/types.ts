@@ -191,6 +191,27 @@ export interface FsSearchResponse {
   truncated: boolean;
 }
 
+export interface FsStatResponse {
+  path: string;
+  name: string;
+  isDir: boolean;
+  size: number;
+  mode: string;
+  modeOctal?: string;
+  mtime: string;
+  atime?: string;
+  ctime?: string;
+  uid?: number;
+  gid?: number;
+  owner?: string;
+  group?: string;
+  inode?: number;
+  links?: number;
+  md5?: string;
+  symlink?: boolean;
+  linkTo?: string;
+}
+
 export interface DuNode {
   name: string;
   path: string;
