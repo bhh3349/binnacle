@@ -1,0 +1,40 @@
+version: 2
+
+project_name: srvconsole
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: srvconsole
+    main: ./cmd/srvconsole
+    binary: srvconsole
+    env:
+      - CGO_ENABLED=1
+      - CGO_CFLAGS=-w
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+
+archives:
+  - formats: [tar.gz]
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'

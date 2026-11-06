@@ -1,0 +1,19 @@
+# 构建产物
+/srvconsole
+/dist/
+/web/
+*.exe
+
+# 运行时数据
+/state/
+*.db
+*.db-shm
+*.db-wal
+*.part
+*.log
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+.DS_Store
