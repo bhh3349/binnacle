@@ -19,6 +19,31 @@ export function fmtBps(n: number): string {
   return `${fmtBytes(n)}/s`;
 }
 
+/**
+ * 图表 Y 轴用的紧凑字节格式化。
+ * 保证不同刻度输出不同文本（旧实现把 800k/800k/800k 都格式化成同一个串），
+ * 且字符数尽量稳定，避免轴宽跳动。
+ */
+export function fmtBytesAxis(n: number): string {
+  if (!Number.isFinite(n) || n <= 0) return '0';
+  const units = ['B', 'K', 'M', 'G', 'T'];
+  let i = 0;
+  let v = n;
+  while (v >= 1024 && i < units.length - 1) {
+    v /= 1024;
+    i++;
+  }
+  // 数值 <10 保留 1 位，>=10 取整 —— 刻度之间必定可区分
+  const s = v >= 10 || i === 0 ? Math.round(v).toString() : v.toFixed(1);
+  return `${s}${units[i]}`;
+}
+
+/** 图表 Y 轴用的紧凑百分比 */
+export function fmtPctAxis(n: number): string {
+  if (!Number.isFinite(n)) return '—';
+  return `${Math.round(n)}%`;
+}
+
 export function fmtPct(n: number, digits = 1): string {
   if (!Number.isFinite(n)) return '—';
   return `${n.toFixed(digits)}%`;

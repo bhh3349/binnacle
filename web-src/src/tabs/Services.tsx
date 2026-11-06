@@ -125,27 +125,27 @@ function LogPanel({ unit, onClose }: { unit: string; onClose: () => void }) {
   }, [lines, follow]);
 
   return (
-    <div className="border-line bg-surface flex min-h-0 flex-col overflow-hidden rounded-lg border">
-      <div className="border-line flex shrink-0 items-center justify-between gap-2 border-b px-3 py-1.5">
+    <div className="border-[var(--line)] bg-[var(--paper-2)] flex min-h-0 flex-col overflow-hidden rounded-none border">
+      <div className="border-[var(--line)] flex shrink-0 items-center justify-between gap-2 border-b px-3 py-1.5">
         <div className="flex min-w-0 items-center gap-1.5">
-          <ScrollText size={12} className="text-fg-subtle" />
+          <ScrollText size={12} className="text-[var(--text-helper)]" />
           <span className="num truncate text-[11.5px]">{unit}</span>
-          <span className="text-fg-subtle num text-[10px]">{lines.length} 行</span>
+          <span className="text-[var(--text-helper)] num text-[10px]">{lines.length} 行</span>
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <Button
             size="xs"
-            variant={follow ? 'primary' : 'default'}
+            variant={follow ? 'accent' : 'outline'}
             onClick={() => setFollow((f) => !f)}
             title="实时跟随"
           >
             {follow ? <CircleDot size={10} /> : <Play size={10} />}
             {follow ? '跟随中' : '已暂停'}
           </Button>
-          <Button size="xs" variant="ghost" onClick={() => void load()} title="重新拉取">
+          <Button size="xs" variant="quiet" onClick={() => void load()} title="重新拉取">
             <RefreshCw size={10} />
           </Button>
-          <Button size="xs" variant="ghost" onClick={onClose} title="关闭">
+          <Button size="xs" variant="quiet" onClick={onClose} title="关闭">
             <X size={10} />
           </Button>
         </div>
@@ -168,7 +168,7 @@ function LogPanel({ unit, onClose }: { unit: string; onClose: () => void }) {
             }
           />
         ) : (
-          <pre className="num text-fg-muted text-[10.5px] leading-[1.55] break-all whitespace-pre-wrap">
+          <pre className="num text-[var(--text-secondary)] text-[10.5px] leading-[1.55] break-all whitespace-pre-wrap">
             {lines.map((l, i) => {
               const m = /^(\d{4}-\d\d-\d\dT[\d:+-]+)\s+(\S+)\s+(\S+?):\s?(.*)$/.exec(l);
               if (!m) return <div key={i}>{l}</div>;
@@ -177,10 +177,10 @@ function LogPanel({ unit, onClose }: { unit: string; onClose: () => void }) {
               const isWarn = /warn/i.test(msg ?? '');
               return (
                 <div key={i} className="flex gap-2">
-                  <span className="text-fg-subtle shrink-0">{ts?.slice(11, 19)}</span>
-                  <span className="text-fg-subtle shrink-0 opacity-70">{host}</span>
-                  <span className="text-accent/70 shrink-0">{unitName}</span>
-                  <span className={cx('min-w-0', isErr ? 'text-danger' : isWarn ? 'text-warn' : '')}>
+                  <span className="text-[var(--text-helper)] shrink-0">{ts?.slice(11, 19)}</span>
+                  <span className="text-[var(--text-helper)] shrink-0 opacity-70">{host}</span>
+                  <span className="text-[var(--accent)]/70 shrink-0">{unitName}</span>
+                  <span className={cx('min-w-0', isErr ? 'text-[var(--alert)]' : isWarn ? 'text-[var(--warn)]' : '')}>
                     {msg}
                   </span>
                 </div>
@@ -277,34 +277,34 @@ export function ServicesTab({ active = true }: { active?: boolean }) {
       <Card padded={false} className="shrink-0 px-3 py-2">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-[12px] font-medium">systemd 服务</span>
-          <Badge tone="ok" dot>
+          <Badge tone="ok">
             {counts.running} 运行中
           </Badge>
           {counts.failed > 0 && (
-            <Badge tone="danger" dot>
+            <Badge tone="danger">
               {counts.failed} 失败
             </Badge>
           )}
-          <span className="text-fg-subtle num text-[10.5px]">共 {counts.total} 个（白名单内）</span>
+          <span className="text-[var(--text-helper)] num text-[10.5px]">共 {counts.total} 个（白名单内）</span>
 
           <div className="relative ml-auto">
-            <Search size={11} className="text-fg-subtle absolute top-1/2 left-2 -translate-y-1/2" />
+            <Search size={11} className="text-[var(--text-helper)] absolute top-1/2 left-2 -translate-y-1/2" />
             <input
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
               placeholder="过滤 unit…"
-              className="border-line bg-surface-2 text-fg placeholder:text-fg-subtle focus:border-accent/50 h-6 w-[170px] rounded-md border pr-6 pl-6 text-[11px] outline-none transition-colors"
+              className="border-[var(--line)] bg-[var(--paper-3)] text-[var(--ink)] placeholder:text-[var(--text-helper)] focus:border-[var(--accent)] h-6 w-[170px] rounded-none border pr-6 pl-6 text-[11px] outline-none transition-colors"
             />
             {filter && (
               <button
                 onClick={() => setFilter('')}
-                className="text-fg-subtle hover:text-fg absolute top-1/2 right-1.5 -translate-y-1/2"
+                className="text-[var(--text-helper)] hover:text-[var(--ink)] absolute top-1/2 right-1.5 -translate-y-1/2"
               >
                 <X size={10} />
               </button>
             )}
           </div>
-          <Button size="xs" variant="ghost" onClick={() => void load()} title="刷新">
+          <Button size="xs" variant="quiet" onClick={() => void load()} title="刷新">
             <RefreshCw size={11} className={loading ? 'spin' : undefined} />
           </Button>
         </div>
@@ -313,10 +313,10 @@ export function ServicesTab({ active = true }: { active?: boolean }) {
       {notice && (
         <div
           className={cx(
-            'fade-in shrink-0 rounded-lg border px-3 py-1.5 text-[11.5px]',
+            'fade-in shrink-0 rounded-none border px-3 py-1.5 text-[11.5px]',
             notice.kind === 'ok'
-              ? 'border-ok/30 bg-ok/10 text-ok'
-              : 'border-danger/30 bg-danger/10 text-danger',
+              ? 'border-[var(--ok)]/40 bg-[var(--ok)]/10 text-[var(--ok)]'
+              : 'border-[var(--alert)]/40 bg-[var(--alert)]/10 text-[var(--alert)]',
           )}
         >
           {notice.text}
@@ -325,7 +325,7 @@ export function ServicesTab({ active = true }: { active?: boolean }) {
 
       <div className="flex min-h-0 flex-1 gap-3">
         <Card padded={false} className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-          <div className="border-line text-fg-subtle flex shrink-0 items-center gap-2 border-b px-3 py-1.5 text-[10.5px]">
+          <div className="border-[var(--line)] text-[var(--text-helper)] flex shrink-0 items-center gap-2 border-b px-3 py-1.5 text-[10.5px]">
             <span className="flex-1">Unit</span>
             <span className="w-[84px]">状态</span>
             <span className="w-[80px] text-right">PID</span>
@@ -377,22 +377,22 @@ export function ServicesTab({ active = true }: { active?: boolean }) {
                   return (
                     <div
                       key={s.name}
-                      className="hover:bg-surface-2/60 flex items-center gap-2 px-3 py-1.5 text-[11.5px] transition-colors"
+                      className="hover:bg-[var(--paper-3)]/60 flex items-center gap-2 px-3 py-1.5 text-[11.5px] transition-colors"
                     >
                       <div className="min-w-0 flex-1">
-                        <div className="num text-fg truncate">{s.name}</div>
-                        <div className="text-fg-subtle truncate text-[10px]">{s.description || '—'}</div>
+                        <div className="num text-[var(--ink)] truncate">{s.name}</div>
+                        <div className="text-[var(--text-helper)] truncate text-[10px]">{s.description || '—'}</div>
                       </div>
                       <div className="w-[84px] shrink-0">
-                        <Badge tone={activeTone(s.active)} dot>
+                        <Badge tone={activeTone(s.active)}>
                           {ACTIVE_LABEL[s.active] ?? s.active}
                         </Badge>
-                        <div className="text-fg-subtle num mt-0.5 text-[9.5px]">{s.sub}</div>
+                        <div className="text-[var(--text-helper)] num mt-0.5 text-[9.5px]">{s.sub}</div>
                       </div>
-                      <span className="num text-fg-subtle w-[80px] shrink-0 text-right text-[10px]">
+                      <span className="num text-[var(--text-helper)] w-[80px] shrink-0 text-right text-[10px]">
                         {s.mainPid > 0 ? s.mainPid : '—'}
                       </span>
-                      <span className="num text-fg-subtle w-[120px] shrink-0 text-right text-[10px]">
+                      <span className="num text-[var(--text-helper)] w-[120px] shrink-0 text-right text-[10px]">
                         {s.sinceUnix > 0
                           ? new Date(s.sinceUnix * 1000).toLocaleString('zh-CN', { hour12: false })
                           : '—'}
@@ -403,10 +403,10 @@ export function ServicesTab({ active = true }: { active?: boolean }) {
                         )}
                       </span>
                       <div className="flex w-[178px] shrink-0 items-center justify-end gap-1">
-                        {b && <Loader2 size={11} className="spin text-accent" />}
+                        {b && <Loader2 size={11} className="spin text-[var(--accent)]" />}
                         <Button
                           size="xs"
-                          variant="ghost"
+                          variant="quiet"
                           disabled={!!b}
                           onClick={() => void doAction(s.name, 'start')}
                           title="启动"
@@ -415,7 +415,7 @@ export function ServicesTab({ active = true }: { active?: boolean }) {
                         </Button>
                         <Button
                           size="xs"
-                          variant="ghost"
+                          variant="quiet"
                           disabled={!!b}
                           onClick={() => void doAction(s.name, 'stop')}
                           title="停止"
@@ -424,7 +424,7 @@ export function ServicesTab({ active = true }: { active?: boolean }) {
                         </Button>
                         <Button
                           size="xs"
-                          variant="ghost"
+                          variant="quiet"
                           disabled={!!b}
                           onClick={() => void doAction(s.name, 'restart')}
                           title="重启"
@@ -433,7 +433,7 @@ export function ServicesTab({ active = true }: { active?: boolean }) {
                         </Button>
                         <Button
                           size="xs"
-                          variant="ghost"
+                          variant="quiet"
                           onClick={() => setLogUnit(s.name)}
                           title="查看日志"
                         >

@@ -262,38 +262,38 @@ export function TerminalTab({ active }: { active: boolean }) {
   return (
     <div className="flex h-[calc(100vh-8.5rem)] min-h-[420px] flex-col gap-2">
       {/* 工具条 */}
-      <div className="border-line bg-surface flex shrink-0 items-center gap-2 rounded-[10px] border px-3 py-1.5">
+      <div className="border-[var(--line)] bg-[var(--paper-2)] flex shrink-0 items-center gap-2 rounded-none border px-3 py-1.5">
         <span className="text-[12px] font-medium">终端</span>
         {state === 'open' ? (
-          <span className="text-fg-subtle inline-flex items-center gap-1 text-[10.5px]">
-            <Circle size={7} className="fill-ok text-ok" />
+          <span className="text-[var(--text-helper)] inline-flex items-center gap-1 text-[10.5px]">
+            <Circle size={7} className="fill-[var(--ok)] text-[var(--ok)]" />
             已连接 · PTY bash -l
           </span>
         ) : state === 'connecting' ? (
-          <span className="text-fg-subtle inline-flex items-center gap-1 text-[10.5px]">
+          <span className="text-[var(--text-helper)] inline-flex items-center gap-1 text-[10.5px]">
             <Loader2 size={10} className="spin" />
             连接中…
           </span>
         ) : state === 'closed' ? (
-          <span className="text-warn inline-flex items-center gap-1 text-[10.5px]">
+          <span className="text-[var(--warn)] inline-flex items-center gap-1 text-[10.5px]">
             <WifiOff size={10} />
             已断开{retries > 0 ? ` · 第 ${retries} 次重连中` : ''}
           </span>
         ) : (
-          <span className="text-danger inline-flex items-center gap-1 text-[10.5px]">
+          <span className="text-[var(--alert)] inline-flex items-center gap-1 text-[10.5px]">
             <WifiOff size={10} />
             {errMsg ?? '连接失败'}
           </span>
         )}
 
         <div className="ml-auto flex items-center gap-1">
-          <Button size="xs" variant="ghost" onClick={clear} title="清屏">
+          <Button size="xs" variant="quiet" onClick={clear} title="清屏">
             <Trash2 size={11} />
           </Button>
-          <Button size="xs" variant="ghost" onClick={fitNow} title="适应窗口">
+          <Button size="xs" variant="quiet" onClick={fitNow} title="适应窗口">
             <Maximize2 size={11} />
           </Button>
-          <Button size="xs" variant="default" onClick={reconnect} title="重连">
+          <Button size="xs" variant="outline" onClick={reconnect} title="重连">
             <Plug size={11} />
             重连
           </Button>
@@ -303,19 +303,19 @@ export function TerminalTab({ active }: { active: boolean }) {
       {/* 终端主体 */}
       <div
         className={cx(
-          'border-line bg-surface term-host relative min-h-0 flex-1 overflow-hidden rounded-[10px] border',
+          'border-[var(--line)] bg-[var(--paper-2)] term-host relative min-h-0 flex-1 overflow-hidden rounded-none border',
         )}
         onClick={() => termRef.current?.focus()}
       >
         <div ref={hostRef} className="h-full w-full" />
         {state !== 'open' && (
-          <div className="bg-surface/80 pointer-events-none absolute inset-x-0 top-0 flex justify-center p-2 backdrop-blur-[1px]">
+          <div className="bg-[var(--paper)]/85 pointer-events-none absolute inset-x-0 top-0 flex justify-center p-2 ">
             <div
               className={cx(
-                'pointer-events-auto flex items-center gap-2 rounded-md border px-2.5 py-1 text-[11px]',
+                'pointer-events-auto flex items-center gap-2 rounded-none border px-2.5 py-1 text-[11px]',
                 state === 'error'
-                  ? 'border-danger/30 bg-danger/10 text-danger'
-                  : 'border-line bg-surface-2 text-fg-muted',
+                  ? 'border-[var(--alert)]/40 bg-[var(--alert)]/10 text-[var(--alert)]'
+                  : 'border-[var(--line)] bg-[var(--paper-3)] text-[var(--text-secondary)]',
               )}
             >
               {state === 'error' ? <WifiOff size={11} /> : <Loader2 size={11} className="spin" />}
@@ -324,7 +324,7 @@ export function TerminalTab({ active }: { active: boolean }) {
                 : state === 'closed'
                   ? '连接已断开，正在自动重连…'
                   : '正在建立 PTY 连接…'}
-              <Button size="xs" variant="ghost" onClick={reconnect}>
+              <Button size="xs" variant="quiet" onClick={reconnect}>
                 立即重连
               </Button>
             </div>

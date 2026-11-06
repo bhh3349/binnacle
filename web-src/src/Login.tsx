@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { api, setToken } from './lib/api';
 import { useTelemetry } from './store/telemetry';
-import { Button } from './components/ui';
+import { Button, Logo } from './components/ui';
 import { Loader2 } from 'lucide-react';
-import { Logo } from './components/ui';
 
 export function Login() {
   const [value, setValue] = useState('');
@@ -31,19 +30,17 @@ export function Login() {
   };
 
   return (
-    <div className="flex min-h-full items-center justify-center px-6">
-      <div className="fade-in w-full max-w-[360px]">
-        <div className="mb-7 flex items-center gap-2.5">
-          <div className="border-line bg-surface-2 flex h-9 w-9 items-center justify-center rounded-lg border">
-            <Logo size={17} className="text-accent" />
-          </div>
+    <div className="flex min-h-full items-center justify-center bg-[var(--paper)] px-6">
+      <div className="fade-in w-full max-w-[380px]">
+        <div className="mb-8 flex items-center gap-3">
+          <Logo size={26} className="text-[var(--accent)]" />
           <div>
-            <div className="text-[14px] font-medium tracking-tight">binnacle</div>
-            <div className="text-fg-subtle text-[11px]">一台机器的驾驶舱</div>
+            <div className="text-[17px] leading-tight font-medium text-[var(--ink)]">binnacle</div>
+            <div className="kicker mt-0.5">一台机器的驾驶舱</div>
           </div>
         </div>
 
-        <label className="text-fg-muted mb-1.5 block text-[11.5px]" htmlFor="token">
+        <label className="kicker mb-2 block" htmlFor="token">
           访问 Token
         </label>
         <input
@@ -56,26 +53,26 @@ export function Login() {
           onKeyDown={(e) => {
             if (e.key === 'Enter') void submit();
           }}
-          placeholder="粘贴后端 state/token 中的值"
-          className="border-line bg-surface-2 text-fg placeholder:text-fg-subtle focus:border-accent/60 num h-9 w-full rounded-lg border px-3 text-[12px] outline-none transition-colors"
+          placeholder="粘贴 /opt/binnacle/state/token 中的值"
+          className="num h-10 w-full border-0 border-b-2 border-[var(--line-strong)] bg-transparent px-0 text-[13px] text-[var(--ink)] transition-colors outline-none placeholder:text-[var(--text-placeholder)] focus:border-[var(--accent)]"
         />
 
-        {err && <div className="text-danger mt-2 text-[11.5px]">{err}</div>}
+        {err && <div className="mt-2 text-[12px] text-[var(--alert)]">{err}</div>}
 
         <Button
-          variant="primary"
+          variant="accent"
           size="md"
-          className="mt-3 w-full"
+          className="mt-5 w-full"
           disabled={!value.trim() || busy}
           onClick={() => void submit()}
         >
           {busy ? <Loader2 size={13} className="spin" /> : null}
-          {busy ? '验证中…' : '进入控制台'}
+          {busy ? '验证中' : '进入控制台'}
         </Button>
 
-        <p className="text-fg-subtle mt-4 text-[11px] leading-relaxed">
-          Token 也可通过 URL 传入：<code className="num text-fg-muted">?token=…</code>，或直接放置
-          <code className="num text-fg-muted"> X-Token</code> 请求头。
+        <p className="mt-6 text-[11.5px] leading-relaxed text-[var(--text-helper)]">
+          Token 也可通过 URL 传入 <code className="num text-[var(--text-secondary)]">?token=…</code>
+          ，或直接使用 <code className="num text-[var(--text-secondary)]">X-Token</code> 请求头。
         </p>
       </div>
     </div>

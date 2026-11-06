@@ -8,16 +8,16 @@ import { FilesTab } from './tabs/Files';
 import { ServicesTab } from './tabs/Services';
 import { TerminalTab } from './tabs/Terminal';
 import { cx } from './lib/format';
-import { Moon, Sun, WifiOff, Circle } from 'lucide-react';
+import { Moon, Sun, WifiOff } from 'lucide-react';
 import { Logo } from './components/ui';
 
 type TabKey = 'overview' | 'files' | 'services' | 'terminal';
 
-const TABS: { key: TabKey; label: string }[] = [
-  { key: 'overview', label: '概览' },
-  { key: 'files', label: '文件' },
-  { key: 'services', label: '服务' },
-  { key: 'terminal', label: '终端' },
+const TABS: { key: TabKey; label: string; hint: string }[] = [
+  { key: 'overview', label: '概览', hint: 'OVERVIEW' },
+  { key: 'files', label: '文件', hint: 'FILES' },
+  { key: 'services', label: '服务', hint: 'SERVICES' },
+  { key: 'terminal', label: '终端', hint: 'TERMINAL' },
 ];
 
 function readTokenFromUrl(): string | null {
@@ -25,7 +25,6 @@ function readTokenFromUrl(): string | null {
   const t = sp.get('token');
   if (t) {
     setToken(t);
-    // 清掉地址栏里的 token，避免留在历史记录
     sp.delete('token');
     const q = sp.toString();
     history.replaceState(null, '', `${location.pathname}${q ? `?${q}` : ''}${location.hash}`);
@@ -33,6 +32,8 @@ function readTokenFromUrl(): string | null {
   }
   return null;
 }
+
+/* ── 连接状态指示 ─────────────────────────────────────────────────────── */
 
 function ConnIndicator() {
   const conn = useTelemetry((s) => s.conn);
@@ -48,27 +49,32 @@ function ConnIndicator() {
 
   if (conn === 'online') {
     return (
-      <span className="text-fg-subtle inline-flex items-center gap-1.5 text-[11px]">
-        <Circle size={7} className="fill-ok text-ok" />
+      <span className="kicker inline-flex items-center gap-1.5 text-[var(--ok)]">
+        <span className="h-[6px] w-[6px] shrink-0 bg-[var(--ok)]" />
         实时
       </span>
     );
   }
   if (conn === 'connecting' || conn === 'idle') {
     return (
-      <span className="text-fg-subtle inline-flex items-center gap-1.5 text-[11px]">
-        <Circle size={7} className="text-fg-subtle animate-pulse fill-current" />
+      <span className="kicker inline-flex items-center gap-1.5">
+        <span className="h-[6px] w-[6px] shrink-0 animate-pulse bg-[var(--text-placeholder)]" />
         连接中
       </span>
     );
   }
   return (
-    <span className="text-warn inline-flex items-center gap-1.5 text-[11px]" title="WebSocket 已断开，界面保留最后数据">
-      <WifiOff size={11} />
-      离线 · {ago === null ? '无数据' : `最后更新 ${ago} 秒前`}
+    <span
+      className="kicker inline-flex items-center gap-1.5 text-[var(--warn)]"
+      title="WebSocket 已断开，界面保留最后数据"
+    >
+      <WifiOff size={10} className="shrink-0" />
+      离线 · {ago === null ? '无数据' : `${ago}s`}
     </span>
   );
 }
+
+/* ── 应用外壳 ─────────────────────────────────────────────────────────── */
 
 export function App() {
   const authed = useTelemetry((s) => s.authed);
@@ -79,7 +85,6 @@ export function App() {
   const [booting, setBooting] = useState(true);
   const [bootErr, setBootErr] = useState<string | null>(null);
 
-  // 首次挂载：URL token → 校验 → 建连
   useEffect(() => {
     let cancelled = false;
     const urlTok = readTokenFromUrl();
@@ -89,7 +94,6 @@ export function App() {
       setBooting(false);
       return;
     }
-    // 有 token 就先当作已认证，同时后台校验一次
     setToken(tok);
     setAuthed(true);
     api
@@ -102,7 +106,6 @@ export function App() {
       .catch((e: unknown) => {
         if (cancelled) return;
         setBootErr(e instanceof Error ? e.message : '后端不可达');
-        // 后端不可达也要进主界面（会显示离线态），但先尝试一次
         bootstrapTelemetry();
         setBooting(false);
       });
@@ -112,7 +115,6 @@ export function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 键盘：1-4 切页签
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
@@ -131,9 +133,9 @@ export function App() {
   if (booting) {
     return (
       <div className="flex min-h-full items-center justify-center">
-        <div className="text-fg-subtle flex items-center gap-2 text-[12px]">
-          <Circle size={7} className="fill-accent text-accent animate-pulse" />
-          正在连接后端…
+        <div className="kicker flex items-center gap-2">
+          <span className="h-[6px] w-[6px] animate-pulse bg-[var(--accent)]" />
+          正在连接后端
         </div>
       </div>
     );
@@ -142,58 +144,75 @@ export function App() {
   if (!authed) return <Login />;
 
   return (
-    <div className="flex h-full min-h-full flex-col">
-      {/* 顶栏 */}
-      <header className="border-line bg-bg/85 sticky top-0 z-20 border-b backdrop-blur-md">
-        <div className="mx-auto flex h-11 max-w-[1560px] items-center gap-3 px-4">
-          <div className="flex items-center gap-2">
-            <Logo size={15} className="text-accent" />
-            <span className="text-[12.5px] font-medium tracking-tight">binnacle</span>
-            <span className="text-fg-subtle hidden text-[10.5px] md:inline">一台机器的驾驶舱</span>
+    <div className="flex min-h-full flex-col bg-[var(--paper)]">
+      {/* ── 顶栏：瑞士风，底部一条 2px 实线 ─────────────────────── */}
+      <header className="sticky top-0 z-20 bg-[var(--paper)]">
+        <div className="mx-auto flex h-12 w-full max-w-[1280px] items-center gap-6 px-6">
+          {/* 品牌 */}
+          <div className="flex shrink-0 items-center gap-2">
+            <Logo size={16} className="text-[var(--accent)]" />
+            <span className="text-[13.5px] leading-none font-medium tracking-[0.01em] text-[var(--ink)]">
+              binnacle
+            </span>
+            <span className="kicker hidden lg:inline">驾驶舱</span>
           </div>
 
-          <nav className="ml-2 flex items-center gap-0.5" role="tablist">
-            {TABS.map((t, i) => (
-              <button
-                key={t.key}
-                role="tab"
-                aria-selected={tab === t.key}
-                onClick={() => setTab(t.key)}
-                className={cx(
-                  'relative h-7 rounded-md px-2.5 text-[12px] transition-colors duration-150',
-                  tab === t.key
-                    ? 'bg-surface-2 text-fg font-medium'
-                    : 'text-fg-muted hover:text-fg hover:bg-surface-2/60',
-                )}
-                title={`快捷键 ${i + 1}`}
-              >
-                {t.label}
-              </button>
-            ))}
+          {/* 页签：直角，选中用 accent 下划线 */}
+          <nav className="flex items-stretch gap-0" role="tablist">
+            {TABS.map((t, i) => {
+              const on = tab === t.key;
+              return (
+                <button
+                  key={t.key}
+                  role="tab"
+                  aria-selected={on}
+                  onClick={() => setTab(t.key)}
+                  title={`快捷键 ${i + 1}`}
+                  className={cx(
+                    'group relative flex items-center gap-1.5 px-3 py-1 transition-colors duration-150',
+                    on
+                      ? 'text-[var(--ink)]'
+                      : 'text-[var(--text-helper)] hover:text-[var(--ink)]',
+                  )}
+                >
+                  <span className="text-[12.5px] font-medium whitespace-nowrap">{t.label}</span>
+                  <span className="num hidden text-[9px] text-[var(--text-placeholder)] lg:inline">
+                    {i + 1}
+                  </span>
+                  <span
+                    className={cx(
+                      'absolute inset-x-2 -bottom-[13px] h-[2px] transition-colors duration-150',
+                      on ? 'bg-[var(--accent)]' : 'bg-transparent',
+                    )}
+                  />
+                </button>
+              );
+            })}
           </nav>
 
-          <div className="ml-auto flex items-center gap-3">
+          {/* 右侧状态 */}
+          <div className="ml-auto flex shrink-0 items-center gap-4">
             <ConnIndicator />
-            <div className="bg-line h-4 w-px" />
+            <span className="h-3 w-px bg-[var(--line)]" />
             <button
               onClick={toggleTheme}
               title={theme === 'dark' ? '切换到亮色' : '切换到暗色'}
-              className="text-fg-muted hover:text-fg hover:bg-surface-2 flex h-7 w-7 items-center justify-center rounded-md transition-colors"
+              className="flex h-6 w-6 items-center justify-center text-[var(--text-helper)] transition-colors hover:text-[var(--ink)]"
             >
               {theme === 'dark' ? <Sun size={13} /> : <Moon size={13} />}
             </button>
           </div>
         </div>
+        <div className="h-[2px] w-full bg-[var(--ink)]" />
         {bootErr && (
-          <div className="border-line bg-warn/5 text-warn border-t px-4 py-1.5 text-center text-[11px]">
-            后端健康检查失败（{bootErr}）——界面保留离线态，恢复后自动重连
+          <div className="bg-[var(--paper-3)] px-6 py-1.5 text-center text-[11.5px] text-[var(--warn)]">
+            后端健康检查失败（{bootErr}）—— 界面保留离线态，恢复后自动重连
           </div>
         )}
       </header>
 
-      {/* 内容 */}
-      <main className="mx-auto w-full max-w-[1560px] flex-1 px-4 py-4">
-        {/* 四个页签常驻挂载，切走只隐藏 —— 保住目录位置、编辑器草稿、终端会话 */}
+      {/* ── 内容 ────────────────────────────────────────────────── */}
+      <main className="mx-auto w-full max-w-[1280px] flex-1 px-6 py-6">
         <div className={tab === 'overview' ? 'fade-in' : 'hidden'}>
           <OverviewTab active={tab === 'overview'} />
         </div>
@@ -208,9 +227,10 @@ export function App() {
         </div>
       </main>
 
-      <footer className="border-line text-fg-subtle mx-auto flex w-full max-w-[1560px] items-center justify-between border-t px-4 py-2 text-[10.5px]">
-        <span>binnacle · 一台机器的驾驶舱 · 数据来自本机 collector，无 mock</span>
-        <span className="num">快捷键 1-4 切换页签</span>
+      {/* ── 页脚 ────────────────────────────────────────────────── */}
+      <footer className="mx-auto flex w-full max-w-[1280px] items-center justify-between gap-4 px-6 py-3">
+        <span className="kicker">binnacle · 一台机器的驾驶舱</span>
+        <span className="kicker">数据来自本机 collector · 1-4 切换页签</span>
       </footer>
     </div>
   );

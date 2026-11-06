@@ -1,67 +1,155 @@
+/* ============================================================================
+   binnacle · 设计系统
+   移植自 guizang-page-skill 瑞士国际主义（Swiss / ikb）体系
+   ─────────────────────────────────────────────────────────────────────────────
+   采纳的核心规则（来自 references/design-rules.md）：
+   · 12 列网格，gutter 20px，容器 1200px
+   · 字体三级：标题 / 正文 / 元信息（mono）
+   · 色彩：不用纯黑白；只有一个 accent；图表用 accent + 灰阶交替
+   · 分割线：section 之间不加线，靠间距呼吸；卡片靠背景色区分，不用边框
+   · 瑞士风：直角 0 圆角、无阴影、无渐变
+   · 中文排版 T2/T3/T6/T7/T8/T9/T11/T13/T14
+   ========================================================================= */
+
 @import 'tailwindcss';
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-@theme {
-  --font-sans:
-    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Noto Sans CJK SC', 'Noto Sans SC',
-    'PingFang SC', 'Microsoft YaHei', sans-serif;
-  --font-mono:
-    ui-monospace, 'SFMono-Regular', 'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+/* ── 字体：拉丁子集本地内联，中文回退系统 Noto Sans CJK SC ─────────────── */
 
-  --color-bg: var(--sc-bg);
-  --color-surface: var(--sc-surface);
-  --color-surface-2: var(--sc-surface-2);
-  --color-line: var(--sc-line);
-  --color-line-strong: var(--sc-line-strong);
-  --color-fg: var(--sc-fg);
-  --color-fg-muted: var(--sc-fg-muted);
-  --color-fg-subtle: var(--sc-fg-subtle);
-  --color-accent: var(--sc-accent);
-  --color-accent-fg: var(--sc-accent-fg);
-  --color-ok: var(--sc-ok);
-  --color-warn: var(--sc-warn);
-  --color-danger: var(--sc-danger);
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url('/fonts/inter-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
 }
 
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('/fonts/jetbrains-mono-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+
+@theme {
+  /* T13：西文在前、中文在后 */
+  --font-sans:
+    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Noto Sans CJK SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+  --font-mono:
+    'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Noto Sans CJK SC',
+    monospace;
+
+  /* 间距刻度（design-rules --sp-*，只取 dashboard 需要的档） */
+  --spacing-1: 2px;
+  --spacing-2: 4px;
+  --spacing-3: 8px;
+  --spacing-4: 12px;
+  --spacing-5: 16px;
+  --spacing-6: 20px;
+  --spacing-7: 24px;
+  --spacing-8: 32px;
+  --spacing-9: 40px;
+  --spacing-10: 48px;
+  --spacing-11: 64px;
+
+  /* 语义色 → 全部指向 CSS 变量，亮暗同源 */
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-paper-3: var(--paper-3);
+  --color-ink: var(--ink);
+  --color-body: var(--text-body);
+  --color-secondary: var(--text-secondary);
+  --color-helper: var(--text-helper);
+  --color-placeholder: var(--text-placeholder);
+  --color-rule: var(--line);
+  --color-rule-subtle: var(--line-subtle);
+  --color-rule-strong: var(--line-strong);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-on: var(--accent-on);
+  --color-accent-soft: var(--accent-soft);
+  --color-alert: var(--alert);
+  --color-warn: var(--warn);
+  --color-ok: var(--ok);
+
+  --radius-none: 0px;
+}
+
+/* ── 亮色：ikb 克莱因蓝 ───────────────────────────────────────────────── */
+
 :root {
-  --sc-bg: #ffffff;
-  --sc-surface: #fcfcfd;
-  --sc-surface-2: #f5f6f8;
-  --sc-line: #e7e8ec;
-  --sc-line-strong: #d6d8de;
-  --sc-fg: #16181d;
-  --sc-fg-muted: #62666f;
-  --sc-fg-subtle: #8e939d;
-  --sc-accent: #4f46e5;
-  --sc-accent-fg: #ffffff;
-  --sc-ok: #15803d;
-  --sc-warn: #a16207;
-  --sc-danger: #dc2626;
-  --sc-shadow: 0 1px 2px rgb(16 18 23 / 0.06), 0 1px 3px rgb(16 18 23 / 0.04);
+  --paper: #fafaf8;
+  --paper-2: #f0f0ee;
+  --paper-3: #e6e6e3;
+
+  --ink: #0a0a0a;
+  --text-primary: #0a0a0a;
+  --text-body: #252524;
+  --text-secondary: #525252;
+  --text-helper: #737373;
+  --text-placeholder: #a3a3a3;
+
+  --line-strong: #a3a3a3;
+  --line: #d4d4d2;
+  --line-subtle: #e4e4e1;
+
+  --accent: #002fa7;
+  --accent-ink: #002fa7;
+  --accent-on: #ffffff;
+  --accent-soft: #dfe5f2;
+
+  --alert: #b3261e;
+  --warn: #8a5a00;
+  --ok: #1a6b3c;
+
+  --shadow: none;
   color-scheme: light;
 }
 
+/* ── 暗色：午夜墨对应 ─────────────────────────────────────────────────── */
+
 .dark {
-  --sc-bg: #08090b;
-  --sc-surface: #0d0e11;
-  --sc-surface-2: #14161a;
-  --sc-line: #1e2025;
-  --sc-line-strong: #2a2d34;
-  --sc-fg: #eceef2;
-  --sc-fg-muted: #9aa0aa;
-  --sc-fg-subtle: #6b7280;
-  --sc-accent: #818cf8;
-  --sc-accent-fg: #0b0c0f;
-  --sc-ok: #4ade80;
-  --sc-warn: #fbbf24;
-  --sc-danger: #f87171;
-  --sc-shadow: none;
+  --paper: #0e0e0d;
+  --paper-2: #191917;
+  --paper-3: #232320;
+
+  --ink: #f0f0ec;
+  --text-primary: #f0f0ec;
+  --text-body: #d8d8d3;
+  --text-secondary: #a8a8a3;
+  --text-helper: #86867f;
+  --text-placeholder: #66665f;
+
+  --line-strong: #55554f;
+  --line: #2e2e2a;
+  --line-subtle: #242420;
+
+  --accent: #96b0ff;
+  --accent-ink: #b8c8ff;
+  --accent-on: #0a0a0a;
+  --accent-soft: #1c2440;
+
+  --alert: #ff6b60;
+  --warn: #e0ab56;
+  --ok: #5ec98a;
+
+  --shadow: none;
   color-scheme: dark;
 }
 
+/* ── 基础 ─────────────────────────────────────────────────────────────── */
+
 * {
-  border-color: var(--sc-line);
+  border-color: var(--line);
 }
 
 html,
@@ -72,80 +160,127 @@ body,
 
 body {
   margin: 0;
-  background: var(--sc-bg);
-  color: var(--sc-fg);
+  background: var(--paper);
+  color: var(--text-body);
   font-family: var(--font-sans);
-  font-size: 13px;
+  font-size: 17px; /* T2 */
+  line-height: 1.8; /* T3 瑞士风 */
+  font-weight: 400;
+  letter-spacing: 0; /* T7 汉字密排 */
+  line-break: strict; /* T8 避头尾 */
+  word-break: normal;
+  overflow-wrap: break-word; /* T11 */
+  text-spacing-trim: normal; /* T9 标点挤压 */
+  hanging-punctuation: allow-end;
+  font-kerning: normal;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  font-variant-numeric: tabular-nums;
 }
 
 ::selection {
-  background: color-mix(in oklab, var(--sc-accent) 30%, transparent);
+  background: var(--accent);
+  color: var(--accent-on);
+}
+
+/* T14：中文标题字重不低于 300，行高 1.4，不加负字距 */
+h1,
+h2,
+h3,
+h4 {
+  letter-spacing: 0;
+  line-height: 1.4;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-break: strict;
 }
 
 /* 细滚动条 */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--sc-line-strong) transparent;
+  scrollbar-color: var(--line) transparent;
 }
 *::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 *::-webkit-scrollbar-thumb {
-  background: var(--sc-line-strong);
-  border-radius: 8px;
+  background: var(--line);
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--line-strong);
 }
 *::-webkit-scrollbar-track {
   background: transparent;
 }
 
-@utility card {
-  background: var(--sc-surface);
-  border: 1px solid var(--sc-line);
-  border-radius: 10px;
-}
+/* ── 工具类 ───────────────────────────────────────────────────────────── */
 
+/* 元信息 / 数字：等宽字体 + 表格数字对齐 */
 @utility num {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'zero' 1;
   letter-spacing: -0.01em;
 }
 
-/* 骨架屏 */
+/* 元信息标签：瑞士风等宽大写小字 */
+@utility kicker {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-helper);
+}
+
+/* 卡片：背景色区分，无边框无阴影无圆角（瑞士风） */
+@utility card {
+  background: var(--paper-2);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* 强调块：accent 满底色块 */
+@utility card-accent {
+  background: var(--accent);
+  color: var(--accent-on);
+  border-radius: 0;
+}
+
+/* ── 动效 ─────────────────────────────────────────────────────────────── */
+
 @keyframes sc-shimmer {
   0% {
-    opacity: 0.45;
+    opacity: 0.5;
   }
   50% {
-    opacity: 0.9;
+    opacity: 1;
   }
   100% {
-    opacity: 0.45;
+    opacity: 0.5;
   }
 }
 
 .skeleton {
-  background: var(--sc-surface-2);
-  border-radius: 6px;
-  animation: sc-shimmer 1.5s ease-in-out infinite;
+  background: var(--paper-3);
+  border-radius: 0;
+  animation: sc-shimmer 1.6s var(--ease-standard, ease-in-out) infinite;
 }
 
 @keyframes sc-fade-in {
   from {
     opacity: 0;
-    transform: translateY(2px);
   }
   to {
     opacity: 1;
-    transform: none;
   }
 }
 
 .fade-in {
-  animation: sc-fade-in 220ms ease-out;
+  animation: sc-fade-in 240ms cubic-bezier(0.2, 0, 0.38, 0.9);
 }
 
 @keyframes sc-spin {
@@ -172,29 +307,36 @@ body {
   }
 }
 
-/* uPlot 主题化 */
+/* ── uPlot 主题化 ─────────────────────────────────────────────────────── */
+
 .uplot,
 .u-wrap {
   font-family: var(--font-mono) !important;
+  font-variant-numeric: tabular-nums;
 }
 .u-legend {
   font-size: 11px !important;
-  color: var(--sc-fg-muted) !important;
+  font-family: var(--font-mono) !important;
+  color: var(--text-helper) !important;
+  letter-spacing: 0.04em;
 }
 .u-legend .u-marker {
   border-width: 0 !important;
-  border-radius: 2px;
+  border-radius: 0 !important;
+  width: 8px !important;
+  height: 8px !important;
 }
 .u-axis {
-  color: var(--sc-fg-subtle) !important;
+  color: var(--text-placeholder) !important;
 }
 .u-select {
-  background: color-mix(in oklab, var(--sc-accent) 14%, transparent) !important;
+  background: color-mix(in oklab, var(--accent) 12%, transparent) !important;
 }
 
-/* xterm 容器 */
+/* ── xterm ────────────────────────────────────────────────────────────── */
+
 .term-host .xterm {
-  padding: 10px 12px;
+  padding: 12px 16px;
 }
 .term-host .xterm-viewport {
   background: transparent !important;

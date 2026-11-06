@@ -50,12 +50,12 @@ import {
 /* ---------------- 图标 ---------------- */
 
 function EntryIcon({ e, size = 13 }: { e: FsEntry; size?: number }) {
-  if (e.isDir) return <Folder size={size} className="text-accent/80 shrink-0" />;
-  if (isImage(e.name)) return <FileImage size={size} className="text-fg-subtle shrink-0" />;
-  if (isTextFile(e.name)) return <FileCode size={size} className="text-fg-subtle shrink-0" />;
+  if (e.isDir) return <Folder size={size} className="text-[var(--accent)]/80 shrink-0" />;
+  if (isImage(e.name)) return <FileImage size={size} className="text-[var(--text-helper)] shrink-0" />;
+  if (isTextFile(e.name)) return <FileCode size={size} className="text-[var(--text-helper)] shrink-0" />;
   if (/\.(zip|tar|gz|xz|7z|bz2|zst)$/i.test(e.name))
-    return <FileIcon size={size} className="text-warn/80 shrink-0" />;
-  return <FileText size={size} className="text-fg-subtle shrink-0" />;
+    return <FileIcon size={size} className="text-[var(--warn)]/80 shrink-0" />;
+  return <FileText size={size} className="text-[var(--text-helper)] shrink-0" />;
 }
 
 /* ---------------- 编辑器 ---------------- */
@@ -99,20 +99,20 @@ function Editor({
   const lines = state.content.split('\n').length;
 
   return (
-    <div className="border-line bg-surface-2/40 flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border">
-      <div className="border-line bg-surface flex shrink-0 items-center justify-between gap-2 border-b px-3 py-1.5">
+    <div className="border-[var(--line)] bg-[var(--paper-3)]/40 flex min-h-0 flex-1 flex-col overflow-hidden rounded-none border">
+      <div className="border-[var(--line)] bg-[var(--paper-2)] flex shrink-0 items-center justify-between gap-2 border-b px-3 py-1.5">
         <div className="flex min-w-0 items-center gap-1.5">
-          <FileCode size={12} className="text-fg-subtle shrink-0" />
+          <FileCode size={12} className="text-[var(--text-helper)] shrink-0" />
           <span className="num truncate text-[11.5px]">{state.path}</span>
           {dirty && <Badge tone="warn">未保存</Badge>}
         </div>
         <div className="flex shrink-0 items-center gap-1">
-          <span className="text-fg-subtle num mr-1 text-[10.5px]">{lines} 行</span>
-          <Button size="xs" variant="primary" disabled={!dirty || state.saving} onClick={onSave}>
+          <span className="text-[var(--text-helper)] num mr-1 text-[10.5px]">{lines} 行</span>
+          <Button size="xs" variant="accent" disabled={!dirty || state.saving} onClick={onSave}>
             {state.saving ? <Loader2 size={10} className="spin" /> : null}
             {state.saving ? '保存中' : '保存'}
           </Button>
-          <Button size="xs" variant="ghost" onClick={onClose} title="关闭">
+          <Button size="xs" variant="quiet" onClick={onClose} title="关闭">
             <X size={11} />
           </Button>
         </div>
@@ -128,7 +128,7 @@ function Editor({
       ) : (
         <>
           {state.saveError && (
-            <div className="border-danger/25 bg-danger/5 text-danger shrink-0 border-b px-3 py-1 text-[11px]">
+            <div className="border-[var(--alert)]/40 bg-[var(--alert)]/5 text-[var(--alert)] shrink-0 border-b px-3 py-1 text-[11px]">
               保存失败：{state.saveError}
             </div>
           )}
@@ -137,7 +137,7 @@ function Editor({
             spellCheck={false}
             value={state.content}
             onChange={(e) => onChange(e.target.value)}
-            className="num text-fg placeholder:text-fg-subtle min-h-0 w-full flex-1 resize-none bg-transparent p-3 text-[12px] leading-[1.55] outline-none"
+            className="num text-[var(--ink)] placeholder:text-[var(--text-helper)] min-h-0 w-full flex-1 resize-none bg-transparent p-3 text-[12px] leading-[1.55] outline-none"
             placeholder="（空文件）"
           />
         </>
@@ -159,23 +159,23 @@ function Treemap({ nodes, onOpen }: { nodes: DuNode[]; onOpen: (path: string) =>
           <button
             key={n.path}
             onClick={() => onOpen(n.path)}
-            className="hover:bg-surface-2 group flex w-full items-center gap-2 rounded px-1 py-[2px] text-left transition-colors"
+            className="hover:bg-[var(--paper-3)] group flex w-full items-center gap-2 rounded px-1 py-[2px] text-left transition-colors"
             title={`${n.path}\n${fmtBytes(n.size)}${n.isDir ? ` · ${n.count} 项` : ''}`}
           >
-            <span className="text-fg-subtle num w-4 shrink-0 text-right text-[9.5px]">{i + 1}</span>
-            <span className="num text-fg-muted w-[120px] shrink-0 truncate text-[11px]">
+            <span className="text-[var(--text-helper)] num w-4 shrink-0 text-right text-[9.5px]">{i + 1}</span>
+            <span className="num text-[var(--text-secondary)] w-[120px] shrink-0 truncate text-[11px]">
               {n.name}
             </span>
-            <span className="bg-surface-2 relative h-[10px] min-w-0 flex-1 overflow-hidden rounded-sm">
+            <span className="bg-[var(--paper-3)] relative h-[10px] min-w-0 flex-1 overflow-hidden rounded-none">
               <span
                 className={cx(
-                  'absolute inset-y-0 left-0 rounded-sm transition-[width] duration-300',
-                  n.isDir ? 'bg-accent/55' : 'bg-accent/30',
+                  'absolute inset-y-0 left-0 rounded-none transition-[width] duration-300',
+                  n.isDir ? 'bg-[var(--accent)]/55' : 'bg-[var(--accent)]/30',
                 )}
                 style={{ width: `${Math.max(pct, 1.5)}%` }}
               />
             </span>
-            <span className="num text-fg-subtle w-[68px] shrink-0 text-right text-[10px]">
+            <span className="num text-[var(--text-helper)] w-[68px] shrink-0 text-right text-[10px]">
               {fmtBytes(n.size)}
             </span>
           </button>
@@ -485,7 +485,7 @@ export function FilesTab({ active = true }: { active?: boolean }) {
       }}
       className={cx(
         'rounded px-1.5 py-0.5 text-[10.5px] transition-colors',
-        sort === k ? 'bg-surface-2 text-fg' : 'text-fg-subtle hover:text-fg',
+        sort === k ? 'bg-[var(--paper-3)] text-[var(--ink)]' : 'text-[var(--text-helper)] hover:text-[var(--ink)]',
       )}
     >
       {label}
@@ -498,36 +498,36 @@ export function FilesTab({ active = true }: { active?: boolean }) {
       {/* 工具栏 */}
       <Card padded={false} className="shrink-0 px-3 py-2">
         <div className="flex flex-wrap items-center gap-2">
-          <Button size="xs" variant="ghost" onClick={() => void load('/')} title="根目录">
+          <Button size="xs" variant="quiet" onClick={() => void load('/')} title="根目录">
             <Home size={12} />
           </Button>
           <Button
             size="xs"
-            variant="ghost"
+            variant="quiet"
             disabled={!list?.parent}
             onClick={() => void load(list?.parent || '/')}
             title="上级目录"
           >
             <ArrowUp size={12} />
           </Button>
-          <Button size="xs" variant="ghost" onClick={() => void load(cwd)} title="刷新">
+          <Button size="xs" variant="quiet" onClick={() => void load(cwd)} title="刷新">
             <RefreshCw size={11} className={loading ? 'spin' : undefined} />
           </Button>
 
-          <div className="border-line mx-0.5 h-4 w-px" />
+          <div className="border-[var(--line)] mx-0.5 h-4 w-px" />
 
           {/* 面包屑 */}
           <div className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto">
             {crumbs.map((c, i) => (
               <span key={c.path} className="flex shrink-0 items-center">
-                {i > 0 && <ChevronRight size={10} className="text-fg-subtle mx-0.5" />}
+                {i > 0 && <ChevronRight size={10} className="text-[var(--text-helper)] mx-0.5" />}
                 <button
                   onClick={() => void load(c.path)}
                   className={cx(
                     'num rounded px-1 py-0.5 text-[11.5px] transition-colors',
                     i === crumbs.length - 1
-                      ? 'text-fg font-medium'
-                      : 'text-fg-muted hover:text-fg hover:bg-surface-2',
+                      ? 'text-[var(--ink)] font-medium'
+                      : 'text-[var(--text-secondary)] hover:text-[var(--ink)] hover:bg-[var(--paper-3)]',
                   )}
                 >
                   {c.name}
@@ -538,29 +538,29 @@ export function FilesTab({ active = true }: { active?: boolean }) {
 
           {/* 搜索 */}
           <div className="relative">
-            <Search size={11} className="text-fg-subtle absolute top-1/2 left-2 -translate-y-1/2" />
+            <Search size={11} className="text-[var(--text-helper)] absolute top-1/2 left-2 -translate-y-1/2" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="搜索当前目录…"
-              className="border-line bg-surface-2 text-fg placeholder:text-fg-subtle focus:border-accent/50 h-6 w-[150px] rounded-md border pr-6 pl-6 text-[11px] outline-none transition-colors"
+              className="border-[var(--line)] bg-[var(--paper-3)] text-[var(--ink)] placeholder:text-[var(--text-helper)] focus:border-[var(--accent)] h-6 w-[150px] rounded-none border pr-6 pl-6 text-[11px] outline-none transition-colors"
             />
             {search && (
               <button
                 onClick={() => setSearch('')}
-                className="text-fg-subtle hover:text-fg absolute top-1/2 right-1.5 -translate-y-1/2"
+                className="text-[var(--text-helper)] hover:text-[var(--ink)] absolute top-1/2 right-1.5 -translate-y-1/2"
               >
                 <X size={10} />
               </button>
             )}
           </div>
 
-          <Button size="xs" variant="ghost" onClick={() => setHidden((h) => !h)} title="显示隐藏文件">
-            <Eye size={11} className={hidden ? 'text-fg' : undefined} />
+          <Button size="xs" variant="quiet" onClick={() => setHidden((h) => !h)} title="显示隐藏文件">
+            <Eye size={11} className={hidden ? 'text-[var(--ink)]' : undefined} />
           </Button>
           <Button
             size="xs"
-            variant={showDu ? 'default' : 'ghost'}
+            variant={showDu ? 'solid' : 'quiet'}
             onClick={() => setShowDu((v) => !v)}
             title="目录占用"
           >
@@ -570,7 +570,7 @@ export function FilesTab({ active = true }: { active?: boolean }) {
 
         {/* 第二行：操作 */}
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
-          <Button size="xs" variant="primary" onClick={() => fileInputRef.current?.click()}>
+          <Button size="xs" variant="accent" onClick={() => fileInputRef.current?.click()}>
             <Upload size={11} />
             上传
           </Button>
@@ -578,7 +578,7 @@ export function FilesTab({ active = true }: { active?: boolean }) {
             <Folder size={11} />
             新建目录
           </Button>
-          <div className="border-line mx-0.5 h-4 w-px" />
+          <div className="border-[var(--line)] mx-0.5 h-4 w-px" />
           <Button
             size="xs"
             disabled={selectedPaths.length !== 1}
@@ -620,7 +620,7 @@ export function FilesTab({ active = true }: { active?: boolean }) {
             {sortBtn('name', '名称')}
             {sortBtn('mtime', '修改时间')}
             {sortBtn('size', '大小')}
-            <span className="text-fg-subtle num ml-2 text-[10.5px]">
+            <span className="text-[var(--text-helper)] num ml-2 text-[10.5px]">
               {rows.length} 项
               {list && ` · 可用 ${fmtBytes(list.free)} / ${fmtBytes(list.totalSize)}`}
             </span>
@@ -632,7 +632,7 @@ export function FilesTab({ active = true }: { active?: boolean }) {
       <div className="flex min-h-0 flex-1 gap-3">
         <Card padded={false} className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           {/* 表头 */}
-          <div className="border-line text-fg-subtle flex shrink-0 items-center gap-2 border-b px-3 py-1.5 text-[10.5px]">
+          <div className="border-[var(--line)] text-[var(--text-helper)] flex shrink-0 items-center gap-2 border-b px-3 py-1.5 text-[10.5px]">
             <span className="w-4" />
             <span className="flex-1">名称</span>
             <span className="w-[92px] text-right">大小</span>
@@ -644,7 +644,7 @@ export function FilesTab({ active = true }: { active?: boolean }) {
             ref={scrollRef}
             className={cx(
               'min-h-0 flex-1 overflow-auto',
-              dragOver && 'ring-accent/40 ring-2 ring-inset',
+              dragOver && 'ring-[var(--accent)]/40 ring-2 ring-inset',
             )}
             onDragOver={(e) => {
               e.preventDefault();
@@ -702,7 +702,7 @@ export function FilesTab({ active = true }: { active?: boolean }) {
                     hint="可以上传文件或新建目录。"
                     action={
                       <div className="flex gap-1.5">
-                        <Button size="xs" variant="primary" onClick={() => fileInputRef.current?.click()}>
+                        <Button size="xs" variant="accent" onClick={() => fileInputRef.current?.click()}>
                           <Upload size={11} />
                           上传
                         </Button>
@@ -728,7 +728,7 @@ export function FilesTab({ active = true }: { active?: boolean }) {
                       key={`${e.path}-${vi.index}`}
                       className={cx(
                         'absolute top-0 left-0 flex w-full cursor-pointer items-center gap-2 px-3 text-[11.5px] transition-colors',
-                        isSel ? 'bg-accent/10' : 'hover:bg-surface-2',
+                        isSel ? 'bg-[var(--accent)]/10' : 'hover:bg-[var(--paper-3)]',
                       )}
                       style={{ height: vi.size, transform: `translateY(${vi.start}px)` }}
                       onClick={(ev) => {
@@ -744,26 +744,26 @@ export function FilesTab({ active = true }: { active?: boolean }) {
                         checked={isSel}
                         onChange={() => toggleSel(e.path)}
                         onClick={(ev) => ev.stopPropagation()}
-                        className="accent-accent h-3 w-3 shrink-0"
+                        className="accent-[var(--accent)] h-3 w-3 shrink-0"
                         aria-label={`选择 ${e.name}`}
                       />
                       <EntryIcon e={e} />
-                      <span className="text-fg min-w-0 flex-1 truncate">
+                      <span className="text-[var(--ink)] min-w-0 flex-1 truncate">
                         {e.name}
                         {e.symlink && (
-                          <span className="text-fg-subtle ml-1 inline-flex items-center gap-0.5 text-[10px]">
+                          <span className="text-[var(--text-helper)] ml-1 inline-flex items-center gap-0.5 text-[10px]">
                             <Link2 size={9} />
                             {e.linkTo ?? 'symlink'}
                           </span>
                         )}
                       </span>
-                      <span className="num text-fg-subtle w-[92px] shrink-0 text-right text-[10.5px]">
+                      <span className="num text-[var(--text-helper)] w-[92px] shrink-0 text-right text-[10.5px]">
                         {e.isDir ? '—' : fmtBytes(e.size)}
                       </span>
-                      <span className="num text-fg-subtle w-[76px] shrink-0 text-right text-[10px]">
+                      <span className="num text-[var(--text-helper)] w-[76px] shrink-0 text-right text-[10px]">
                         {e.mode}
                       </span>
-                      <span className="num text-fg-subtle w-[126px] shrink-0 text-right text-[10px]">
+                      <span className="num text-[var(--text-helper)] w-[126px] shrink-0 text-right text-[10px]">
                         {new Date(e.mtime).toLocaleString('zh-CN', { hour12: false })}
                       </span>
                     </div>
@@ -774,7 +774,7 @@ export function FilesTab({ active = true }: { active?: boolean }) {
           </div>
 
           {/* 底部状态 */}
-          <div className="border-line text-fg-subtle flex shrink-0 items-center justify-between border-t px-3 py-1 text-[10.5px]">
+          <div className="border-[var(--line)] text-[var(--text-helper)] flex shrink-0 items-center justify-between border-t px-3 py-1 text-[10.5px]">
             <span className="num truncate">
               {cwd}
               {searchRes && ` · 搜索「${search.trim()}」${searchRes.truncated ? '（已截断）' : ''}`}
@@ -793,17 +793,17 @@ export function FilesTab({ active = true }: { active?: boolean }) {
                 <SectionHead
                   title={
                     <span className="flex items-center gap-1.5">
-                      <HardDrive size={12} className="text-fg-subtle" />
+                      <HardDrive size={12} className="text-[var(--text-helper)]" />
                       目录占用
                     </span>
                   }
                   hint={cwd}
                   right={
                     <>
-                      <Button size="xs" variant="ghost" onClick={() => void loadDu(cwd)}>
+                      <Button size="xs" variant="quiet" onClick={() => void loadDu(cwd)}>
                         <RefreshCw size={10} className={duLoading ? 'spin' : undefined} />
                       </Button>
-                      <Button size="xs" variant="ghost" onClick={() => setShowDu(false)}>
+                      <Button size="xs" variant="quiet" onClick={() => setShowDu(false)}>
                         <X size={10} />
                       </Button>
                     </>
@@ -844,7 +844,7 @@ export function FilesTab({ active = true }: { active?: boolean }) {
       {/* 快捷入口 */}
       {shortcuts.length > 0 && (
         <div className="flex shrink-0 flex-wrap items-center gap-1">
-          <span className="text-fg-subtle mr-1 text-[10px]">快捷：</span>
+          <span className="text-[var(--text-helper)] mr-1 text-[10px]">快捷：</span>
           {shortcuts.slice(0, 22).map((s) => (
             <button
               key={s.path}
@@ -852,8 +852,8 @@ export function FilesTab({ active = true }: { active?: boolean }) {
               className={cx(
                 'num rounded border px-1.5 py-[1px] text-[10px] transition-colors',
                 cwd === s.path
-                  ? 'border-accent/40 bg-accent/10 text-accent'
-                  : 'border-line text-fg-muted hover:text-fg hover:bg-surface-2',
+                  ? 'border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]'
+                  : 'border-[var(--line)] text-[var(--text-secondary)] hover:text-[var(--ink)] hover:bg-[var(--paper-3)]',
               )}
             >
               {s.name}
@@ -864,15 +864,15 @@ export function FilesTab({ active = true }: { active?: boolean }) {
 
       {/* 上传进度 */}
       {uploading && (
-        <div className="border-line bg-surface fixed right-4 bottom-4 z-40 w-[260px] rounded-lg border p-3 shadow-lg">
+        <div className="border-[var(--line)] bg-[var(--paper-2)] fixed right-4 bottom-4 z-40 w-[260px] rounded-none border p-3 ">
           <div className="mb-1.5 flex items-center gap-1.5 text-[11.5px]">
-            <Loader2 size={11} className="spin text-accent" />
+            <Loader2 size={11} className="spin text-[var(--accent)]" />
             <span className="num truncate">{uploading.name}</span>
-            <span className="num text-fg-subtle ml-auto">{uploading.pct}%</span>
+            <span className="num text-[var(--text-helper)] ml-auto">{uploading.pct}%</span>
           </div>
-          <div className="bg-surface-2 h-1 w-full overflow-hidden rounded-full">
+          <div className="bg-[var(--paper-3)] h-1 w-full overflow-hidden rounded-none">
             <div
-              className="bg-accent h-full rounded-full transition-[width] duration-200"
+              className="bg-[var(--accent)] h-full rounded-none transition-[width] duration-200"
               style={{ width: `${uploading.pct}%` }}
             />
           </div>
@@ -883,11 +883,11 @@ export function FilesTab({ active = true }: { active?: boolean }) {
       {toast && (
         <div
           className={cx(
-            'fade-in fixed right-4 bottom-4 z-50 rounded-lg border px-3 py-2 text-[11.5px] shadow-lg',
+            'fade-in fixed right-4 bottom-4 z-50 rounded-none border px-3 py-2 text-[11.5px] ',
             uploading && 'bottom-[76px]',
             toast.kind === 'ok'
-              ? 'border-ok/30 bg-ok/10 text-ok'
-              : 'border-danger/30 bg-danger/10 text-danger',
+              ? 'border-[var(--ok)]/40 bg-[var(--ok)]/10 text-[var(--ok)]'
+              : 'border-[var(--alert)]/40 bg-[var(--alert)]/10 text-[var(--alert)]',
           )}
         >
           {toast.text}
