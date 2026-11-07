@@ -6,7 +6,6 @@ import { AlertTriangle } from 'lucide-react';
 /* ══════════════════════════════════════════════════════════════════════════
    GPU 卡片 — 按字段判空渲染，不显示 N/A、不显示假 0
    · tempMem !== null      → 显存温度面板（仅 V100）
-   · fanSupported          → 风扇面板（仅 3060）
    · ecc !== null          → ECC 面板（仅 V100）
    · PCIe 降速只标灰字「空闲降速」，绝不报警
    ══════════════════════════════════════════════════════════════════════════ */
@@ -32,7 +31,6 @@ export function GPUCard({ gpu, className }: { gpu: GPUStats; className?: string 
   const procs = gpu.procs ?? [];
 
   const showMemTemp = gpu.tempMem !== null;
-  const showFan = gpu.fanSupported;
   const showEcc = gpu.ecc !== null;
   const showEncDec = gpu.encUtil !== null || gpu.decUtil !== null;
 
@@ -105,15 +103,6 @@ export function GPUCard({ gpu, className }: { gpu: GPUStats; className?: string 
 
         {/* 仅 V100：显存温度 */}
         {showMemTemp && <KV k="显存温度" v={`${fmtNum(gpu.tempMem ?? 0, 0)} °C`} />}
-
-        {/* 仅 3060：风扇 */}
-        {showFan && (
-          <KV
-            k="风扇转速"
-            v={gpu.fan !== null && gpu.fan > 0 ? `${fmtNum(gpu.fan, 0)}%` : '停转（空闲零转速）'}
-            muted={gpu.fan === 0}
-          />
-        )}
 
         <KV k="显存频率" v={`${fmtNum(gpu.clocks.mem, 0)} / ${fmtNum(gpu.clocks.maxMem, 0)} MHz`} />
 

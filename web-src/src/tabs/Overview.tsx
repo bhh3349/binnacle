@@ -522,7 +522,7 @@ export function OverviewTab({ active = true }: { active?: boolean }) {
         </Card>
       </Grid12>
 
-      {/* ── 磁盘 7 列 / 温度+风扇 5 列（各自内容高度）──────────────── */}
+      {/* ── 磁盘 7 列 / 温度 5 列（各自内容高度）─────────────────── */}
       <Grid12 className="items-start">
         <Card className="lg:col-span-7">
           <SectionHead
@@ -555,28 +555,6 @@ export function OverviewTab({ active = true }: { active?: boolean }) {
             )}
           </Card>
 
-          <Card>
-            <SectionHead title="风扇" hint={`${host.fans.length} 通道`} />
-            {host.fans.length === 0 ? (
-              <EmptyState compact title="没有风扇通道" hint="0 RPM 通道已被过滤。" />
-            ) : (
-              <div className="divide-y divide-[var(--line-subtle)]">
-                {host.fans.map((f) => (
-                  <div key={f.label} className="flex items-baseline justify-between gap-3 py-1.5">
-                    <span className="num truncate text-[11.5px] text-[var(--text-secondary)]">
-                      {f.label}
-                    </span>
-                    <span className="num shrink-0 text-[13px] font-medium text-[var(--ink)]">
-                      {fmtNum(f.rpm)}
-                      <span className="ml-1 text-[10px] font-normal text-[var(--text-helper)]">
-                        RPM
-                      </span>
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </Card>
         </div>
       </Grid12>
 
