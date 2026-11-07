@@ -12,6 +12,7 @@ import {
   Activity,
   Folder,
   Moon,
+  MonitorCog,
   PanelLeftClose,
   PanelLeftOpen,
   Sun,
@@ -21,7 +22,7 @@ import {
 } from 'lucide-react';
 import { Logo } from './components/ui';
 
-type TabKey = 'overview' | 'files' | 'services' | 'terminal';
+type TabKey = 'overview' | 'files' | 'services' | 'terminal' | 'console';
 
 interface MenuEntry {
   key: TabKey;
@@ -40,6 +41,7 @@ const MENU_GROUPS: { title: string; items: MenuEntry[] }[] = [
       { key: 'files', label: '文件', icon: Folder },
       { key: 'services', label: '服务', icon: TerminalSquare },
       { key: 'terminal', label: '终端', icon: TerminalSquare },
+      { key: 'console', label: '控制台', icon: MonitorCog },
     ],
   },
 ];
@@ -51,6 +53,7 @@ const PAGE_TITLE: Record<TabKey, string> = {
   files: '文件管理',
   services: '服务管理',
   terminal: '终端',
+  console: 'DSH 控制台',
 };
 
 function readTokenFromUrl(): string | null {
@@ -320,7 +323,7 @@ export function App() {
         </header>
 
         {/* ── 内容区：浅灰底 ──────────────────────────────────── */}
-        <main className="min-h-0 flex-1 overflow-y-auto p-5">
+        <main className={tab === 'console' ? 'hidden' : 'min-h-0 flex-1 overflow-y-auto p-5'}>
           <div className={tab === 'overview' ? 'fade-in' : 'hidden'}>
             <OverviewTab active={tab === 'overview'} />
           </div>
@@ -334,6 +337,17 @@ export function App() {
             <TerminalTab active={tab === 'terminal'} />
           </div>
         </main>
+
+        {/* DSH 控制台：iframe 独占内容区（脱离 padding 与滚动） */}
+        {tab === 'console' && (
+          <div className="min-h-0 flex-1 bg-[var(--paper)]">
+            <iframe
+              src="/console/"
+              title="DSH 控制台"
+              className="h-full w-full border-0"
+            />
+          </div>
+        )}
 
         {/* ── 页脚 ───────────────────────────────────────────── */}
         <footer className="flex h-9 shrink-0 items-center justify-between border-t border-[var(--line)] bg-[var(--paper-2)] px-5">

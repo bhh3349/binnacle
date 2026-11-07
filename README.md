@@ -164,6 +164,7 @@ ufw allow from 192.168.1.0/24 to any port 8090 proto tcp
 | `-web` | 自动探测 | 前端静态目录，找不到时只提供 API |
 | `-sample` | `1000` | 采样间隔（毫秒） |
 | `-retain` | `7` | 历史保留天数 |
+| `-console` | `http://127.0.0.1:8080` | dsh-console 上游（`/console` 反代目标），置空禁用 |
 | `-token` | 自动生成 | 固定 token；不填则首次启动生成并写入 `<state>/token`（0600） |
 
 启动日志会打印 token，首次登录用 `POST /api/login`。
