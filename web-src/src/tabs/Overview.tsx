@@ -522,8 +522,8 @@ export function OverviewTab({ active = true }: { active?: boolean }) {
         </Card>
       </Grid12>
 
-      {/* ── 磁盘 7 列 / 温度 5 列（各自内容高度）─────────────────── */}
-      <Grid12 className="items-start">
+      {/* ── 磁盘 7 列 / 温度 5 列（等高）────────────────────────── */}
+      <Grid12>
         <Card className="lg:col-span-7">
           <SectionHead
             title="磁盘"
@@ -541,8 +541,8 @@ export function OverviewTab({ active = true }: { active?: boolean }) {
           )}
         </Card>
 
-        <div className="flex flex-col gap-5 lg:col-span-5">
-          <Card>
+        <div className="flex min-w-0 flex-col gap-5 lg:col-span-5">
+          <Card className="flex-1">
             <SectionHead
               title="温度"
               hint={`${host.temps.length} 个传感器`}
