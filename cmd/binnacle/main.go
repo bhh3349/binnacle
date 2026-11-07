@@ -20,7 +20,6 @@ func main() {
 		sampleMs = flag.Int("sample", 1000, "采样间隔（毫秒）")
 		token    = flag.String("token", "", "固定 token（默认自动生成）")
 		retain   = flag.Int("retain", 7, "历史保留天数")
-		console  = flag.String("console", "http://127.0.0.1:8080", "dsh-console 上游地址（/console 反代目标），空则禁用")
 	)
 	flag.Parse()
 
@@ -46,13 +45,13 @@ func main() {
 		SampleMs:  *sampleMs,
 		StorePath:       filepath.Join(*stateDir, "metrics.db"),
 		WebDir:          *webDir,
-		ConsoleUpstream: *console,
 	})
 	if err != nil {
 		log.Fatalf("init: %v", err)
 	}
 
 	srv.StartCollector()
+
 
 	// 每天清理一次历史
 	go func() {

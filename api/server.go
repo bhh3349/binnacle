@@ -29,9 +29,6 @@ type Config struct {
 	SampleMs  int
 	StorePath string
 	WebDir    string
-	// ConsoleUpstream 是 dsh-console 的上游地址（例 http://127.0.0.1:8080）。
-	// 为空时 /console 返回 503。
-	ConsoleUpstream string
 }
 
 type Server struct {
@@ -165,10 +162,7 @@ func (s *Server) Handler() http.Handler {
 	// 终端
 	mux.Handle("GET /ws/term", auth(http.HandlerFunc(s.termWS)))
 
-	// dsh-console 反代（页面 + API + DSH Web UI + WS）
-	mux.HandleFunc("GET /console", s.consoleProxy)
-	mux.HandleFunc("GET /console/", s.consoleProxy)
-	mux.HandleFunc("POST /console/", s.consoleProxy)
+
 
 	// 静态前端
 	mux.Handle("GET /", s.staticHandler())
