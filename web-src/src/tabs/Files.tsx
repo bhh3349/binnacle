@@ -449,6 +449,10 @@ export function FilesTab({ active = true }: { active?: boolean }) {
 
   const sel = useSelection(rows);
   const selClear = sel.clear;
+
+  /* 全选状态：只统计当前可见行（搜索结果切换时会自动跟随） */
+  const allSelected = rows.length > 0 && rows.every((r) => sel.selected.has(r.path));
+  const someSelected = !allSelected && rows.some((r) => sel.selected.has(r.path));
   const clip = useClipboard();
   const uploads = useUploadQueue(() => void load(cwd, { keepSel: true }));
 
@@ -1249,7 +1253,19 @@ export function FilesTab({ active = true }: { active?: boolean }) {
         <Card padded={false} className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           {view === 'list' && (
             <div className="flex shrink-0 items-center gap-2 rounded-t-[7px] border-b border-[var(--line)] bg-[var(--paper-3)] px-3 py-2 text-[12px] font-medium text-[var(--text-secondary)]">
-              <span className="w-4" />
+              <span className="flex w-4 items-center justify-center">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  ref={(el) => {
+                    if (el) el.indeterminate = someSelected && !allSelected;
+                  }}
+                  onChange={() => (allSelected ? sel.clear() : sel.selectAll())}
+                  className="h-3 w-3 shrink-0 cursor-pointer accent-[var(--accent)]"
+                  aria-label={allSelected ? '取消全选' : '全选'}
+                  title={`全选（Ctrl+A）· 已选 ${sel.selected.size} / ${rows.length}`}
+                />
+              </span>
               <span className="w-3.5" />
               <span className="flex-1">名称</span>
               <span className="w-[92px] text-right">大小</span>
