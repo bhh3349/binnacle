@@ -79,6 +79,8 @@ function PreviewInner({
   }, [onClose, onPrev, onNext, hasPrev, hasNext]);
 
   const src = api.downloadUrl(entry.path);
+  // PDF 必须用 inline，attachment 会让浏览器拒绝内嵌渲染
+  const inlineSrc = api.inlineUrl(entry.path);
   // 图片优先用缩略图接口（大尺寸），失败回落到原图
   const thumb = api.thumbUrl(entry.path, 1800);
 
@@ -198,7 +200,7 @@ function PreviewInner({
 
         {kind === 'pdf' && (
           <iframe
-            src={src}
+            src={inlineSrc}
             title={entry.name}
             className="h-full w-full border-0 bg-white"
           />

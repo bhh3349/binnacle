@@ -344,6 +344,12 @@ export const api = {
     return `/api/fs/download${q({ path, token: tok || undefined })}`;
   },
 
+  /** 供 iframe / img 内嵌使用的地址（后端返回 Content-Disposition: inline） */
+  inlineUrl: (path: string) => {
+    const tok = getToken();
+    return `/api/fs/download${q({ path, inline: '1', token: tok || undefined })}`;
+  },
+
   thumbUrl: (path: string, w = 256) => {
     const tok = getToken();
     return `/api/fs/thumb${q({ path, w, token: tok || undefined })}`;

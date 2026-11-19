@@ -163,7 +163,13 @@ func (s *Server) fsExtract(w http.ResponseWriter, r *http.Request) {
 		if strings.HasSuffix(strings.ToLower(base), ".tar") {
 			base = base[:len(base)-4]
 		}
-		body.DestDir = filepath.Join(s.virtual(filepath.Dir(src)), base)
+		// 若压缩包内部已经自带同名顶层目录（zip -r dirA dirA 这种常见产物），
+		// 再套一层就会变成 dirA/dirA/xxx —— 此时直接解到当前目录。
+		if archiveHasTopDir(src, base) {
+			body.DestDir = s.virtual(filepath.Dir(src))
+		} else {
+			body.DestDir = filepath.Join(s.virtual(filepath.Dir(src)), base)
+		}
 	}
 	dest, err := s.resolve(body.DestDir)
 	if err != nil {
@@ -306,4 +312,34 @@ func extractTar(r io.Reader, dest string) (int, error) {
 		}
 	}
 	return count, nil
+}
+
+
+// archiveHasTopDir 判断压缩包内所有条目是否都位于名为 top 的顶层目录下。
+// 用于避免「解压到同名目录」造成 dirA/dirA/ 的双层嵌套。
+func archiveHasTopDir(src, top string) bool {
+	if strings.HasSuffix(strings.ToLower(src), ".zip") {
+		zr, err := zip.OpenReader(src)
+		if err != nil {
+			return false
+		}
+		defer zr.Close()
+		if len(zr.File) == 0 {
+			return false
+		}
+		for _, f := range zr.File {
+			name := strings.TrimPrefix(f.Name, "./")
+			first := name
+			if i := strings.IndexByte(name, '/'); i >= 0 {
+				first = name[:i]
+			} else if !f.FileInfo().IsDir() {
+				return false // 顶层直接有文件
+			}
+			if first != top {
+				return false
+			}
+		}
+		return true
+	}
+	return false
 }

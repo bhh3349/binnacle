@@ -112,6 +112,31 @@ export function MultiTerminal({
     window.setTimeout(() => setNotice(null), 2600);
   }, []);
 
+  /**
+   * 全局命令通道：其他模块（如文件管理「在终端打开」）通过
+   *   window.dispatchEvent(new CustomEvent('binnacle:term-run', { detail: { cmd } }))
+   * 让终端在当前会话里真正执行命令，而不是复制到剪贴板。
+   * ref 暴露给监听器，避免闭包拿到旧 state。
+   */
+  const runRef = useRef<((cmd: string) => void) | null>(null);
+
+  /* ── 外部命令注入（在终端打开） ─────────────────────────────── */
+
+  useEffect(() => {
+    const onRun = (ev: Event) => {
+      const cmd = (ev as CustomEvent<{ cmd?: string }>).detail?.cmd;
+      if (!cmd) return;
+      const run = runRef.current;
+      if (run) {
+        run(cmd);
+      } else {
+        notify('终端尚未就绪，请稍后再试');
+      }
+    };
+    window.addEventListener('binnacle:term-run', onRun);
+    return () => window.removeEventListener('binnacle:term-run', onRun);
+  }, [notify]);
+
   /* ── 建会话 ─────────────────────────────────────────────────── */
 
   const connect = useCallback((s: Session) => {
@@ -271,9 +296,60 @@ export function MultiTerminal({
     });
   }, [connect, notify]);
 
+  /* ── 给「在终端打开」等外部调用注入命令 ─────────────────────── */
+
+  useEffect(() => {
+    const sendTo = (ses: Session, cmd: string) => {
+      const push = () => {
+        if (ses.sock && ses.sock.readyState === WebSocket.OPEN) {
+          ses.sock.send(JSON.stringify({ type: 'input', data: cmd + '\n' }));
+          setCurrent(ses.id);
+          return true;
+        }
+        return false;
+      };
+      if (push()) return;
+      let n = 0;
+      const timer = window.setInterval(() => {
+        n += 1;
+        if (push() || n > 50) {
+          window.clearInterval(timer);
+          if (n > 50) notify('终端连接超时，命令未执行');
+        }
+      }, 100);
+    };
+
+    runRef.current = (cmd: string) => {
+      const cur = current ? sessions.current.get(current) : null;
+      if (cur) return sendTo(cur, cmd);
+      const last = [...sessions.current.values()].pop();
+      if (last) return sendTo(last, cmd);
+      // 没有任何会话：先建一个，等它进 Map 再发
+      openSession();
+      let n = 0;
+      const timer = window.setInterval(() => {
+        n += 1;
+        const s2 = [...sessions.current.values()].pop();
+        if (s2) {
+          window.clearInterval(timer);
+          sendTo(s2, cmd);
+        } else if (n > 30) {
+          window.clearInterval(timer);
+          notify('终端启动失败');
+        }
+      }, 100);
+    };
+  }, [current, openSession, notify]);
+
   const closeSession = useCallback((id: string) => {
     const s = sessions.current.get(id);
     if (!s) return;
+    // 有正在运行的前台进程时提示，避免误触丢掉任务
+    const hasOutput = s.term.buffer.active.length > 3;
+    if (hasOutput) {
+      const ok = window.confirm(`关闭「${s.title || '终端'}」？该会话里正在运行的进程会被终止。`);
+      if (!ok) return;
+    }
     s.disposed = true;
     if (s.sock) {
       try {

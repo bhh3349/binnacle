@@ -64,6 +64,21 @@ export function useUploadQueue(onDone: () => void) {
           const task = created[i]!;
           if (aborters.current.has(task.id) === false && task.status === 'canceled') continue;
 
+          // 同名文件保护：存在则询问，避免静默覆盖造成数据丢失
+          const target = joinPath(dir, file.name);
+          const existing = await api.fsStat(target).catch(() => null);
+          if (existing) {
+            if (existing.isDir) {
+              patch(task.id, { status: 'error', error: '同名目录已存在' });
+              continue;
+            }
+            const ok = window.confirm(`「${file.name}」已存在（${fmtBytes(existing.size)}），是否覆盖？`);
+            if (!ok) {
+              patch(task.id, { status: 'canceled' });
+              continue;
+            }
+          }
+
           const ac = new AbortController();
           aborters.current.set(task.id, ac);
           patch(task.id, { status: 'uploading' });

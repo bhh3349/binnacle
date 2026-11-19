@@ -141,9 +141,15 @@ func (s *Server) fsList(w http.ResponseWriter, r *http.Request) {
 		case "name":
 			less = strings.ToLower(a.Name) < strings.ToLower(b.Name)
 		default:
-			less = a.Mtime.After(b.Mtime)
+			// 时间：升序 = 旧在前，降序 = 新在前
+			if order == "asc" {
+				less = a.Mtime.Before(b.Mtime)
+			} else {
+				less = a.Mtime.After(b.Mtime)
+			}
+			return less
 		}
-		if order == "desc" && sortBy != "mtime" {
+		if order == "desc" {
 			less = !less
 		}
 		return less
@@ -233,7 +239,11 @@ func (s *Server) fsDownload(w http.ResponseWriter, r *http.Request) {
 		s.zipDir(w, full, filepath.Base(full)+".zip")
 		return
 	}
-	w.Header().Set("Content-Disposition", "attachment; filename=\""+filepath.Base(full)+"\"")
+	disposition := "attachment"
+	if r.URL.Query().Get("inline") == "1" {
+		disposition = "inline"
+	}
+	w.Header().Set("Content-Disposition", disposition+"; filename=\""+filepath.Base(full)+"\"")
 	// ServeFile 自带 Range 支持
 	http.ServeFile(w, r, full)
 }

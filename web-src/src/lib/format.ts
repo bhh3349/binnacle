@@ -142,3 +142,24 @@ export function isTextFile(name: string): boolean {
   if (i < 0) return false;
   return TEXT_EXT.has(lower.slice(i + 1));
 }
+
+
+/** 列表用的紧凑时间：MM/DD HH:mm（同年）/ YYYY/MM/DD（跨年） */
+export function fmtShortTime(input: string | number | Date, now = Date.now()): string {
+  const d = input instanceof Date ? input : new Date(input);
+  if (Number.isNaN(d.getTime())) return '—';
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const cur = new Date(now);
+  const sameYear = d.getFullYear() === cur.getFullYear();
+  return sameYear
+    ? `${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+    : `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())}`;
+}
+
+/** 完整时间，用于 tooltip */
+export function fmtFullTime(input: string | number | Date): string {
+  const d = input instanceof Date ? input : new Date(input);
+  if (Number.isNaN(d.getTime())) return '—';
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}

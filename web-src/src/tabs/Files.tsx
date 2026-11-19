@@ -6,6 +6,8 @@ import {
   baseName,
   cx,
   fmtBytes,
+  fmtFullTime,
+  fmtShortTime,
   isTextFile,
   joinPath,
   parentOf,
@@ -347,9 +349,9 @@ export function FilesTab({ active = true }: { active?: boolean }) {
   const [leftPct, setLeftPct] = useState<number>(() => {
     try {
       const v = Number(localStorage.getItem('binnacle-split'));
-      return Number.isFinite(v) && v >= 25 && v <= 70 ? v : 45;
+      return Number.isFinite(v) && v >= 25 && v <= 70 ? v : 52;
     } catch {
-      return 45;
+      return 52;
     }
   });
   const [dragging, setDragging] = useState(false);
@@ -362,6 +364,7 @@ export function FilesTab({ active = true }: { active?: boolean }) {
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+
   const dragDepth = useRef(0);
 
   const notify = useCallback((kind: 'ok' | 'err', text: string) => {
@@ -647,15 +650,54 @@ export function FilesTab({ active = true }: { active?: boolean }) {
     [cwd, load, notify],
   );
 
+  /**
+   * 复制文本到剪贴板。
+   * navigator.clipboard 只在 secure context（HTTPS / localhost）可用；
+   * 局域网 HTTP 访问时必须降级到 execCommand，否则会静默失败。
+   */
+  const copyText = useCallback(
+    async (text: string): Promise<boolean> => {
+      if (navigator.clipboard && window.isSecureContext) {
+        try {
+          await navigator.clipboard.writeText(text);
+          return true;
+        } catch {
+          /* 继续降级 */
+        }
+      }
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.top = '-1000px';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        return ok;
+      } catch {
+        return false;
+      }
+    },
+    [],
+  );
+
   const copyPath = useCallback(
     (paths: string[]) => {
       const text = paths.join('\n');
-      void navigator.clipboard
-        ?.writeText(text)
-        .then(() => notify('ok', `已复制 ${paths.length} 条路径`))
-        .catch(() => notify('err', '剪贴板不可用'));
+      void copyText(text).then((ok) => {
+        if (ok) {
+          notify('ok', `已复制 ${paths.length} 条路径`);
+          return;
+        }
+        // 浏览器拒绝写入剪贴板时，退化为可手动选择的弹窗，至少让用户拿得到路径
+        notify('err', '浏览器不允许写剪贴板，已弹出路径供手动复制');
+        window.prompt('复制以下路径（Ctrl+C 后关闭）', text);
+      });
     },
-    [notify],
+    [notify, copyText],
   );
 
   /* ── 右键菜单 ───────────────────────────────────────────────────── */
@@ -795,10 +837,9 @@ export function FilesTab({ active = true }: { active?: boolean }) {
             icon: <Terminal size={11} />,
             onSelect: () => {
               const dir = entry.isDir ? entry.path : parentOf(entry.path);
-              void navigator.clipboard
-                ?.writeText(`cd ${dir}`)
-                .then(() => notify('ok', `已复制 cd ${dir}，切到终端页签粘贴`))
-                .catch(() => notify('err', '剪贴板不可用'));
+              const quoted = `cd ${/\s/.test(dir) ? `"${dir}"` : dir}`;
+              window.dispatchEvent(new CustomEvent('binnacle:term-run', { detail: { cmd: quoted } }));
+              notify('ok', `已在终端执行：${quoted}`);
             },
           },
           {
@@ -953,6 +994,17 @@ export function FilesTab({ active = true }: { active?: boolean }) {
     window.addEventListener('keydown', kbHandler);
     return () => window.removeEventListener('keydown', kbHandler);
   }, [kbHandler]);
+
+  /* ── 左栏宽度监听：窄时隐藏权限列 ─────────────────────────────── */
+
+  // 列表宽度在渲染时测量（分栏拖拽 / 目录切换后 rAF 触发一次重算）
+  const [, bumpLayout] = useState(0);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => bumpLayout((n) => n + 1));
+    return () => cancelAnimationFrame(id);
+  }, [leftPct, rows.length, view]);
+  const listWidth = scrollRef.current?.offsetWidth ?? 0;
+  const narrowList = listWidth > 0 && listWidth < 660;
 
   /* ── 焦点滚动到可见 ─────────────────────────────────────────────── */
 
@@ -1268,9 +1320,9 @@ export function FilesTab({ active = true }: { active?: boolean }) {
               </span>
               <span className="w-3.5" />
               <span className="flex-1">名称</span>
-              <span className="w-[92px] text-right">大小</span>
-              <span className="w-[84px] text-right">权限</span>
-              <span className="w-[146px] text-right">修改时间</span>
+              <span className="w-[78px] text-right">大小</span>
+              {!narrowList && <span className="w-[74px] text-right">权限</span>}
+              <span className="w-[104px] text-right">修改时间</span>
             </div>
           )}
 
@@ -1460,7 +1512,7 @@ export function FilesTab({ active = true }: { active?: boolean }) {
                         aria-label={`选择 ${e.name}`}
                       />
                       <EntryIcon e={e} />
-                      <span className="min-w-0 flex-1 truncate text-[var(--ink)]">
+                      <span className="min-w-0 flex-1 truncate text-[var(--ink)]" title={e.name}>
                         {e.name}
                         {e.symlink && (
                           <span className="ml-1 inline-flex items-center gap-0.5 text-[10px] text-[var(--text-placeholder)]">
@@ -1469,14 +1521,19 @@ export function FilesTab({ active = true }: { active?: boolean }) {
                           </span>
                         )}
                       </span>
-                      <span className="num w-[92px] shrink-0 text-right text-[12.5px] text-[var(--text-secondary)]">
+                      <span className="num w-[78px] shrink-0 text-right text-[12px] text-[var(--text-secondary)]">
                         {e.isDir ? '—' : fmtBytes(e.size)}
                       </span>
-                      <span className="num w-[84px] shrink-0 text-right text-[11.5px] text-[var(--text-helper)]">
-                        {e.mode}
-                      </span>
-                      <span className="num w-[146px] shrink-0 text-right text-[12.5px] text-[var(--text-secondary)]">
-                        {new Date(e.mtime).toLocaleString('zh-CN', { hour12: false })}
+                      {!narrowList && (
+                        <span className="num w-[74px] shrink-0 text-right text-[11px] text-[var(--text-helper)]">
+                          {e.mode}
+                        </span>
+                      )}
+                      <span
+                        className="num w-[104px] shrink-0 whitespace-nowrap text-right text-[11.5px] text-[var(--text-secondary)]"
+                        title={fmtFullTime(e.mtime)}
+                      >
+                        {fmtShortTime(e.mtime)}
                       </span>
                     </div>
                   );
